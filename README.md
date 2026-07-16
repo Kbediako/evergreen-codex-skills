@@ -2,6 +2,8 @@
 
 Durable, generally useful skills for Codex.
 
+[Browse the skill catalogue](skills/README.md).
+
 ## For Codex
 
 ```text
