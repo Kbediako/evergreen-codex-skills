@@ -4,15 +4,22 @@ Durable, generally useful Codex skills designed to stay valuable as models impro
 
 [Browse the skill catalogue](skills/README.md).
 
-## Install
+## Install with Codex
 
-Choose any folder under `skills/` and copy that entire folder into your personal Codex skills directory, normally `~/.codex/skills/`:
+Choose a skill from the [catalogue](skills/README.md), then ask Codex:
 
 ```text
-skills/<skill-name>/  ->  ~/.codex/skills/<skill-name>/
+Use $skill-installer to install <skill-name> from:
+https://github.com/Kbediako/evergreen-codex-skills/tree/main/skills/<skill-name>
+
+Install it for my user account on this operating system. Preserve the complete
+skill directory, validate the installation, and report the installed path and
+whether I need to restart Codex.
 ```
 
-Codex detects skill changes automatically. Restart it only if a newly copied skill does not appear.
+For manual installation, copy the complete `skills/<skill-name>/` directory to
+the user skills location used by your Codex installation. Keep its `agents/`,
+`references/`, and `scripts/` directories intact when present.
 
 ## License
 
