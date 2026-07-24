@@ -1,0 +1,4 @@
+interface:
+  display_name: "Consult ChatGPT Pro"
+  short_description: "Consult ChatGPT Pro and reconcile its advice"
+  default_prompt: "Use $consult-chatgpt-pro to build a faithful context packet, reconcile every in-scope material finding against local evidence, and re-review with ChatGPT Pro until the CLOSED gate is met."
