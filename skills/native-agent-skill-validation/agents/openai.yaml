@@ -1,0 +1,4 @@
+interface:
+  display_name: "Native Agent Skill Validation"
+  short_description: "Forward-test skills under fixed conditions"
+  default_prompt: "Use $native-agent-skill-validation to forward-test this existing or changed skill under controlled conditions."

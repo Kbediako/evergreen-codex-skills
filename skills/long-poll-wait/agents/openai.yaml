@@ -1,0 +1,4 @@
+interface:
+  display_name: "Long Poll Wait"
+  short_description: "Monitor external jobs to terminal state"
+  default_prompt: "Use $long-poll-wait to monitor this external job or process to terminal status."
