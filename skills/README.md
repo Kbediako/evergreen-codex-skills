@@ -15,11 +15,11 @@
 
 ## Coordination bundle
 
-These nine consultation, native-agent, waiting, and Voice skills form the full
+The eight native-agent, waiting, and Voice skills above form the full
 coordination workflow bundle for Codex Multi-Agent V2 with GPT-5.6 Sol. They
-are not one all-or-nothing dependency unit. Install the full bundle when
-`native-codex-coordination` or Voice should have every optional routed
-workflow available:
+are not one all-or-nothing dependency unit. `consult-chatgpt-pro` is a separate
+optional companion. Install all nine together when `native-codex-coordination`
+or Voice should have every optional routed workflow available:
 
 ```console
 npx skills add Kbediako/evergreen-codex-skills -g -a codex -s consult-chatgpt-pro native-codex-coordination native-subagents-first native-agent-deliberation native-agent-evals native-agent-skill-validation wait-for-subagents-patiently long-poll-wait voice-delegate-guidance
