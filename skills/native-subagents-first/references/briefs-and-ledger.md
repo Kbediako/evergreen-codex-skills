@@ -79,7 +79,7 @@ Keep the ledger small enough to survive compaction:
 | Progress delta | Verified change, proof, evidence, decision, or metric; unused or batch unlocked |
 | Next action | Parent action, wait, queued scope, or handoff |
 
-Update it after any spawn/follow-up at any depth, reservation change, meaningful message, final answer, interruption, progress delta, or scope change. Do not narrate unchanged polls.
+Update it after any spawn/follow-up at any depth, reservation change, meaningful message, final answer, interruption, progress delta, or scope change. Do not narrate unchanged wait windows or snapshots.
 
 ## Peer handoffs
 

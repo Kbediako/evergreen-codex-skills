@@ -49,13 +49,25 @@ Make only changes already authorized by the task. If a recommendation materially
 
 After changes, run proportionate validation and update every affected finding. Inspect the resulting diff or decision record before asking for re-review.
 
-## Prepare the re-review handoff
+## Close invariant families before re-review
 
-Use the same conversation when the round depends on its prior findings. Send a compact handoff containing:
+Classify every new post-change finding at the missing-rule and representation or lifecycle-boundary level; an umbrella label alone does not prove recurrence. Activate this gate only when the same rule or boundary recurs, or when the risk spans separately implemented surfaces. Otherwise handle the genuinely new or demonstrated-isolated finding normally. Once activated, stop instance-by-instance re-review and, before the next send:
+
+1. Assign one accountable matrix owner and list every implementation surface. State the governing invariant and make one bounded matrix: `finite scope and exclusions | equivalence class | representative | expected invariant | local check | result`. Cover affected operations, representations, lifecycle boundaries, platforms, and negative boundaries. Merge cases only when the same mechanism justifies them; otherwise split them.
+2. Resolve or disposition every class and every transitively affected surface.
+3. Give a fresh-context local Sol high-reasoning reviewer the matrix and candidate and ask it to find an unrepresented same-family counterexample. This is a local falsification step, not a Pro review. Any successful counterexample reopens the matrix.
+4. Freeze the exact validated source and test bytes and hashes. Rerun validation and regenerate only derived results, counts, summaries, manifests, hashes, and the packet from that candidate; then independently verify the packet against the frozen sources. Any frozen-byte change invalidates the derived evidence and reopens the matrix.
+5. Send one brand-new full-scope Pro conversation the original contract, complete current scope, matrix, dispositions, frozen identities, and regenerated evidence. Ask for unresolved material findings across the whole scope, not confirmation of the latest fix.
+
+This trigger does not add ceremony to a demonstrated isolated finding and does not replace per-finding dispositions or the closure gate.
+
+## Prepare an independent re-review handoff
+
+Open a fresh conversation for every substantive review. Keep sequence labels and prior assistant text out of the reviewer-visible prompt, filenames, title, and message. Send a compact current-state handoff containing:
 
 - Original task, current boundary, success criteria, and requested verdict.
-- Prior bundle identity and the new bundle identity when context changed.
-- Each material finding, its disposition, and the evidence supporting it.
+- Current bundle identity.
+- Each known material risk, its disposition, and the evidence supporting it.
 - Exact changed files or decisions and a concise diff summary.
 - Validation commands or checks with exact results.
 - Remaining disagreement, missing evidence, and residual risk.
@@ -63,15 +75,15 @@ Use the same conversation when the round depends on its prior findings. Send a c
 
 Ask Pro to identify only unresolved in-scope material findings and to end with an explicit closure verdict. Do not drip-feed unrelated material or ask it to repeat findings that are already resolved.
 
-Start a fresh conversation with this same handoff when the prior context is stale, conflicted, inaccessible, or unsuitable for an independent review. Record both URLs.
+A focused re-review can close only the findings and affected scope explicitly supplied in that handoff. Do not promote a narrow verdict to package-wide closure unless the handoff re-establishes the full review contract, includes every changed or transitively affected surface, and asks for that package-wide verdict. Record the reviewed closure scope in the ledger.
+
+Record every conversation URL and internal sequence only in the local ledger. Treat each response as an independent review of the supplied current state, not as confirmation of an earlier reviewer.
 
 ## Evaluate the latest review
 
 Treat a response as substantive only when it evaluates the supplied work rather than merely acknowledging it or reporting progress.
 
-If it identifies a new in-scope material finding, add it to the ledger and return to local reconciliation.
-
-If it repeats a prior finding, attach the earlier disposition and evidence in the next handoff. Close that item only after the latest review has the evidence needed to recognize it as resolved; repetition alone proves nothing.
+If the review identifies a new or repeated in-scope material finding, add or map it in the ledger and apply the invariant-family trigger before the next handoff. Repetition alone proves nothing.
 
 If it suggests out-of-scope work, restate the boundary and ask whether any unresolved material issue remains inside it. Preserve the suggestion and residual risk in the ledger.
 
@@ -83,15 +95,11 @@ If Pro is unavailable, interrupted, or the conversation cannot be observed, pres
 
 Set `CLOSED` only when all three conditions hold:
 
-1. The latest substantive Pro review explicitly reports no unresolved in-scope material finding.
+1. The latest substantive Pro review covers the declared closure scope and explicitly reports no unresolved in-scope material finding.
 2. Every in-scope material finding has a resolved disposition: `accepted-actioned`, `accepted-no-change`, `rejected-evidence`, `superseded`, or properly authorized `out-of-scope`.
 3. No finding remains `blocked` or otherwise unresolved; any blocked finding forces `BLOCKED` even when Pro reports no new findings.
 
 An evidence-backed repeat, superseded point, or explicit out-of-scope suggestion may coexist with closure only when the latest substantive review does not leave it unresolved.
-
-**Forward-test fixture — blocked carryover:** Round 1 finding `F-1` requires validating a migration against a production schema snapshot, but access is not currently authorized, so it remains `blocked`; a later substantive Pro review says, “No further material issues found.”
-
-Expected: remain `BLOCKED`. Resolve the prerequisite, move `F-1` to an allowed resolved disposition with evidence, and send a focused re-review; enter `CLOSED` only if that latest review and the ledger then satisfy all three conditions.
 
 Do not close because tests pass, changes were made, a time or round budget elapsed, Pro was quiet, or the user-facing result looks good. Those facts may support dispositions but cannot replace the latest substantive verdict.
 

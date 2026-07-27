@@ -16,7 +16,7 @@ Treat the governing Browser instructions and live documentation as authoritative
 
 ## Choose conversation and reasoning mode
 
-Continue the same conversation when the new round depends on earlier findings and evidence. Start a fresh conversation when the task, repository, success criteria, or mode changed; prior facts became stale; context has become confused; an independent opinion is required; or the prior round used the wrong reasoning mode.
+Start a fresh conversation for every substantive review, including re-review. Do not expose the review number in the prompt, attachment name, title, or message, and do not paste the prior assistant response. Carry forward current facts and evidence-backed risk statements in the new packet.
 
 Select ChatGPT Pro or the strongest suitable extended-reasoning mode that the current UI exposes. Verify the observed mode before sending and record it exactly; do not infer it from a requested label.
 
@@ -47,7 +47,7 @@ Immediately before sending, confirm:
 - Any required binary evidence is visibly present.
 - No unintended stale attachment or saved-file reference is present.
 
-After sending, record the conversation URL, round, bundle hash, reasoning mode, and send outcome in the ledger.
+After sending, record the conversation URL, internal sequence, bundle hash, reasoning mode, and send outcome in the private ledger.
 
 ## Prompt the consultant
 
@@ -65,9 +65,9 @@ Do not request hidden chain-of-thought. Ask for concise reasons, evidence, tests
 
 ## Wait for a substantive result
 
-Extended reasoning can remain quiet or visibly in progress for a long time. Poll patiently through the supported Browser workflow; do not force an early answer merely because elapsed time is long.
+Extended reasoning can remain quiet or visibly in progress for a long time. Prefer the Browser workflow's supported DOM or response-state wait. If no reliable wait signal exists, make bounded UI checks without a fixed rapid cadence. Do not force an early answer merely because elapsed time is long.
 
-Treat status text, an acknowledgement, a promise to review, a partial generation, or a response lacking the requested verdict as nonterminal. Continue polling or request only the missing deliverable after generation is clearly complete.
+Treat status text, an acknowledgement, a promise to review, a partial generation, or a response lacking the requested verdict as nonterminal. Continue waiting, or request only the missing deliverable after generation is clearly complete.
 
 A substantive result must contain review content that addresses the supplied task and enough of its requested structure to classify findings. Capture the final visible response faithfully and record whether its verdict is explicit.
 

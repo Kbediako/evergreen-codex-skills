@@ -7,7 +7,7 @@ description: Reconcile and wait for native Codex children when a child is quiet,
 
 ## Load The Contract
 
-Load [native-subagents-first](../native-subagents-first/SKILL.md) for lifecycle, model, scope, budget, resume, and direct-tool rules. Apply this skill only to patience, evidence, checkpoint, interruption, and handoff decisions.
+If it is not already active, load [native-subagents-first](../native-subagents-first/SKILL.md) for lifecycle, model, scope, budget, resume, and direct-tool rules. Never recursively reload it. Apply this skill only to patience, evidence, checkpoint, interruption, and handoff decisions.
 
 Use [long-poll-wait](../long-poll-wait/SKILL.md) for external jobs, processes, CI, training, or remote monitors.
 
@@ -35,11 +35,13 @@ Do not create renamed duplicates such as `_2`, `retry`, or `fresh` without provi
 ## Wait Deliberately
 
 1. Continue non-overlapping parent work while the child runs.
-2. Poll again when the answer is not yet required.
-3. Ask for a soft checkpoint when partial evidence would help.
-4. Ask for a hard checkpoint before interrupting for elapsed-time or budget reasons.
-5. Wait one reasonable window after the hard checkpoint.
+2. When the result becomes blocking, call `wait_agent`; this is a mailbox wait, not a status poll.
+3. On timeout, continue useful work or enter another bounded mailbox wait only while the result remains blocking. Do not inspect `list_agents`, send a checkpoint, or narrate unchanged state solely because a timer expired.
+4. Ask for a soft checkpoint when partial evidence would materially help.
+5. Ask for a hard checkpoint before interrupting for a concrete hard-decision reason, then wait one reasonable mailbox window.
 6. Consume and verify any final answer before deciding the next action.
+
+Use the longest wait window compatible with the host's user-update rules and the task's next decision point. Never replace the mailbox wait with sleeps, shell loops, or repeated lifecycle snapshots.
 
 Use:
 

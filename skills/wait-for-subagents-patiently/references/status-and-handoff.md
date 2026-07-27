@@ -18,7 +18,7 @@ Avoid “stalled,” “hung,” “failed,” or “done” unless evidence sup
 Use concise updates:
 
 ```text
-No update arrived in this wait window. The child still shows running, so I am continuing parent-side work and will poll again.
+No update arrived in this wait window. I am continuing parent-side work and will wait on the child mailbox when its result becomes blocking.
 ```
 
 ```text

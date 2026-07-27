@@ -5,50 +5,56 @@ description: Evaluate or audit Codex native Multi-Agent V2 behavior with small r
 
 # Native Agent Evals
 
-## Define The Claim
+## Define the claim
 
 1. State one observable behavior to test.
 2. Define pass, fail, and inconclusive outcomes before running.
 3. Prefer the smallest read-only probe that can falsify the claim.
 4. Exclude production mutations unless the user explicitly requests them.
 
-Load [native-subagents-first](../native-subagents-first/SKILL.md) before running native agents. Follow it as the sole lifecycle, model, budget, resume, and direct-tool contract.
+Load [native-subagents-first](../native-subagents-first/SKILL.md) before running native agents. Follow it as the lifecycle, model, budget, resume, and direct-tool contract.
 
-## Hold The Worker Fixed
+## Hold the worker fixed
 
 Compare treatment and control under the same Sol worker condition:
 
-- keep the Sol model, reasoning effort, role, tool surface, prompt, permissions, and artifact state fixed;
-- change only the skill condition or other named treatment;
-- repeat behavior-level tests before promoting a claimed improvement.
+- model, effort, role, tool surface, prompt, permissions, and artifact state stay fixed;
+- only the named treatment changes;
+- behavior-level tests repeat before promotion.
 
-Never attribute an improvement to skill text when the Sol model or reasoning effort changed. Mark that comparison confounded and rerun it under a fixed worker condition.
+Mark a comparison confounded when the worker condition differs.
 
-## Run A Minimal Probe
+## Run a minimal probe
 
 Use one or more short V2 scenarios:
 
-- surface: inspect the direct collaboration tools visible to a tiny read-only child;
+- surface: inspect direct collaboration tools visible to a tiny read-only child;
 - lifecycle: spawn, wait for the final answer, and inspect status;
-- fanout: run two independent read-only scopes only when fanout itself is under test;
-- interrupt: interrupt a harmless bounded task and inspect the returned previous status;
+- wait: distinguish observation mechanism from continuation lifetime;
+- fanout: use two independent read-only scopes only when fanout is under test;
+- interrupt: interrupt a harmless bounded task and inspect returned status;
 - resume: reconcile an existing child after steering or compaction;
-- invocation: determine whether a skill was loaded, read, announced, and applied.
+- invocation: distinguish skill loaded, read, announced, and applied.
 
-Consume and verify the child final answer. Treat status as lifecycle evidence, not task-result evidence.
+Consume and verify the child final answer. Status is lifecycle evidence, not task-result evidence.
 
-## Audit Rollouts
+## Audit rollouts
 
-Read [rollout-audit.md](references/rollout-audit.md) when inspecting Windows or WSL JSONL, classifying skill invocation, or deduplicating resumed history.
+Read [references/rollout-audit.md](references/rollout-audit.md) before inspecting Windows or WSL JSONL, classifying invocation, or deduplicating resumed history.
 
-Require the audit to:
+Parse JSONL structurally. Treat raw `rg` matches as candidate locations only. Exclude the current audit family. Report exact session IDs, source paths, call IDs, names, namespaces, arguments, outputs, and status transitions.
 
-- parse JSONL records structurally;
-- treat raw `rg` matches as candidate locations only;
-- distinguish loaded, read, announced, and applied;
-- deduplicate resumed or compacted history;
-- exclude the current audit session and its own prompts;
-- report exact session IDs, paths, call names, and namespaces.
+For outbound evidence, use `scripts/export_structural_rollout.py` with a schema-v3 spec. Keep:
+
+- exact source hash pinning and fresh-byte verification;
+- bounded selectors and session-turn binding;
+- one-turn coherence and final-answer/completion equality;
+- exact selected calls, arguments, outputs, and complete answer;
+- physical and logical replay deduplication;
+- study-wide worker expectations, actual cross-run worker invariance,
+  classification, and fail-closed promotion-candidate gates.
+
+Never attach a source rollout or hand-author evidence presented as independently auditable.
 
 ## Report
 
@@ -56,5 +62,6 @@ Require the audit to:
 - Treatment, control, and repetition count.
 - Pass, fail, or inconclusive result.
 - Final child evidence and parent verification.
-- Rollout paths, session IDs, and exact direct-tool evidence when audited.
+- Source hashes, paths, session IDs, selectors, and exact direct-tool evidence.
+- Deduplication, classification, worker matching, and promotion status.
 - Confounds, mutations, and remaining uncertainty.

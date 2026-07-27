@@ -69,12 +69,14 @@ Continue useful parent work while children run. Use:
 
 - `send_message` for an in-brief correction, dependency handoff, or already-requested evidence/checkpoint. It consumes no run; material scope expansion may not hide in a message.
 - `followup_task` for a distinct continuation or scope expansion on an existing child. It always consumes one child run.
-- `wait_agent` when the next parent action needs a child result.
-- `list_agents` for lifecycle status, never as a substitute for the child's final evidence.
+- `wait_agent` as the native mailbox wait when the next parent action needs a child update. It wakes for child mail, user steering, or timeout; timeout is only the end of that wait window.
+- `list_agents` for reconciliation or a concrete lifecycle decision, never as a timer-driven status check or substitute for the child's final evidence.
 
-On a timeout, say only that no update arrived in that wait window, inspect `list_agents`, and keep working or wait again. Before interruption for lateness, request a checkpoint, wait a reasonable window, and compare against the recorded hard decision point. Inspect the interrupt result; `previous_status.completed` means the child completed by interrupt time.
+Do not describe `wait_agent` as polling. Use the longest bounded mailbox wait compatible with the host's user-update rules and the current decision point; do not loop a short timer merely to generate activity. On timeout, say only that no update arrived, continue useful work, or enter another mailbox wait when the result remains blocking. Do not call `list_agents` solely because a wait timed out.
 
-Load `wait-for-subagents-patiently` for detailed budgets, stall evidence, long-running work, or intervention decisions. Explicit domain patience rules, including "do not force an answer," override generic elapsed-time guidance.
+Before interruption for lateness, request a checkpoint, wait a reasonable window, and compare against the recorded hard decision point. Inspect the interrupt result; `previous_status.completed` means the child completed by interrupt time.
+
+If it is not already active, load `wait-for-subagents-patiently` for detailed budgets, stall evidence, long-running work, or intervention decisions. Never recursively reload it. Explicit domain patience rules, including "do not force an answer," override generic elapsed-time guidance.
 
 ## Reconcile And Gate More Work
 

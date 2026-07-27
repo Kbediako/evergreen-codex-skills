@@ -1,6 +1,6 @@
 # Budgets And Stall Evidence
 
-Use these defaults only when neither the user nor a task-domain skill provides a patience policy.
+Elapsed time schedules work; it does not diagnose the child.
 
 ## Record A Waiting Budget
 
@@ -8,22 +8,18 @@ Record:
 
 - start time;
 - task complexity: small, normal, or deep;
-- expected checkpoint;
-- hard decision point;
+- the next parent decision that actually needs the result;
+- any user deadline, external expiry, scarce resource, or safety boundary;
+- a checkpoint condition and hard decision point derived from those facts;
+- the host's maximum practical blocking wait;
 - whether the child blocks the parent's next action.
 
-| Task | Checkpoint | Hard decision |
-| --- | --- | --- |
-| Small lookup or single-file check | 2-3 minutes | 5-8 minutes |
-| Normal code search, review, or multi-file audit | 5-10 minutes | 15-20 minutes |
-| Deep review, browser work, JSONL audit, or large parsing | 10-20 minutes | 30-45 minutes |
-
-Override these defaults for explicit long-running instructions, ChatGPT Pro review, domain-specific research, browser finalization, useful incoming evidence, or a task-specific contract. Treat elapsed time as scheduling input, never as stall proof.
+Do not invent generic minute tables or timer-driven status cadence. If no hard decision fact exists, keep the child off the critical path and use its mailbox only when its result becomes necessary. Explicit long-running instructions, ChatGPT Pro review, browser finalization, and domain patience rules remain authoritative.
 
 At a blocking hard decision point:
 
 1. Request a hard checkpoint.
-2. Wait one more reasonable window.
+2. Enter one reasonable mailbox wait.
 3. Consume available final or checkpoint evidence.
 4. Continue waiting, interrupt, supersede, or proceed without the child based on scope and risk.
 5. Report the scheduling decision without inventing a stall.

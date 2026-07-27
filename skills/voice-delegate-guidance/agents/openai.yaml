@@ -1,0 +1,4 @@
+interface:
+  display_name: "Voice Delegate Guidance"
+  short_description: "Delegate action work from Voice handoffs"
+  default_prompt: "Use $voice-delegate-guidance to coordinate this Voice request through delegated action work."
