@@ -13,17 +13,20 @@
 | [`long-poll-wait`](long-poll-wait/) | Await external work with a separate observation path and active-turn or scheduled continuation. |
 | [`voice-delegate-guidance`](voice-delegate-guidance/) | Keep Codex Voice conversational while delegating every substantive operation and its natural wait or review loop. |
 
-## Native-agent suite
+## Coordination bundle
 
-The nine consultation, native-agent, waiting, and Voice skills above form one
-dependency-complete coordination suite for Codex Multi-Agent V2 with GPT-5.6
-Sol. Install them together when using `native-codex-coordination` or Voice:
+These nine consultation, native-agent, waiting, and Voice skills form the full
+coordination workflow bundle for Codex Multi-Agent V2 with GPT-5.6 Sol. They
+are not one all-or-nothing dependency unit. Install the full bundle when
+`native-codex-coordination` or Voice should have every optional routed
+workflow available:
 
 ```console
 npx skills add Kbediako/evergreen-codex-skills -g -a codex -s consult-chatgpt-pro native-codex-coordination native-subagents-first native-agent-deliberation native-agent-evals native-agent-skill-validation wait-for-subagents-patiently long-poll-wait voice-delegate-guidance
 ```
 
-The CLI exposes each skill separately for review, but that does not imply
-standalone dependency support. Use the full-suite command for coordinated work.
-`native-agent-skill-validation` additionally expects Codex's runtime-provided
-`skill-creator` skill.
+Individual skills can be installed and used independently when their own
+declared dependencies are satisfied. For example, `consult-chatgpt-pro` works
+standalone for ordinary consultations and uses `native-agent-evals` only when
+supplying rollout-derived evidence. `native-agent-skill-validation`
+additionally expects Codex's runtime-provided `skill-creator` skill.
