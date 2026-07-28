@@ -13,7 +13,7 @@ Within this suite, use GPT-5.6 Sol and vary only reasoning effort. If a higher-p
 
 Keep `medium` as the normal floor for this suite. Escalate one step only when the brief names the uncertainty or quality boundary the extra effort should resolve. If the higher-effort treatment does not change accepted outcomes, return to the lower role.
 
-Use custom roles when their configured model and effort match the assignment. Otherwise omit `agent_type` and set `model: "gpt-5.6-sol"` plus `reasoning_effort` explicitly.
+Use custom roles when their configured model and effort match the assignment. If a higher-priority instruction requires an explicit `agent_type`, select the closest compatible exposed role; otherwise omit it and set `model: "gpt-5.6-sol"` plus `reasoning_effort` explicitly.
 
 ## Context inheritance
 

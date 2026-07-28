@@ -57,7 +57,7 @@ Read [references/briefs-and-ledger.md](references/briefs-and-ledger.md) before t
 - For an advisory read-only stream, use bounded before/after detection. Read [references/read-only-boundaries.md](references/read-only-boundaries.md).
 - Give leaf agents a direct boundary not to spawn. Allow nesting only for distinct evidence after the parent records a progress delta, reserves runs from the same cap, and grants the exact nested scope.
 - Let agents message relevant peers directly when they discover a dependency; require the receiving agent and parent to get the concise evidence handoff.
-- Use tool fields for model, effort, role, and history. Do not put tool-field pseudo-markers in the child prompt.
+- Use tool fields for model, effort, role, and history. Include a prompt compatibility marker only when a higher-priority instruction requires it.
 - Ask critics for symptoms, measurements, reproduction, and uncertainty—not a dictated repair.
 - If evidence falsifies the brief's mechanism, require the worker to report the contradiction and replacement hypothesis. The worker stays inside its authority; scope or architecture changes remain with the parent or user.
 

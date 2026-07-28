@@ -3774,10 +3774,10 @@ def main() -> int:
         if args.out is not None:
             output = lexical_absolute(args.out)
             protected_inputs = {
-                spec_path,
+                spec_path.resolve(strict=False),
                 *(Path(run["source_identity"]["path"]) for run in extract["runs"]),
             }
-            if output in protected_inputs:
+            if output.resolve(strict=False) in protected_inputs:
                 raise ExportError(
                     "output-input-conflict",
                     "The output path must not replace the specification or a source rollout.",

@@ -32,7 +32,7 @@ Do not attach a rollout or conversation export. Use `native-agent-evals/scripts/
 Resolve the helper from the active skill location and use the current platform's Python 3 launcher:
 
 ```text
-python "<skill-root>/scripts/build_context_bundle.py" --root "<repo>" --mode review --title "Review current work" --prompt-file "<prompt.md>" [--include "<path>"]
+python3 "<skill-root>/scripts/build_context_bundle.py" --root "<repo>" --mode review --title "Review current work" --prompt-file "<prompt.md>" [--include "<path>"]
 ```
 
 Repeat `--include` for exact files or directories. Use `--whole-repo` for a bounded snapshot, `--include-binary` only when binary evidence matters, and `--allow-outside-root` only for an exact authorized outside-root file.
@@ -63,6 +63,8 @@ Open the ZIP and inspect:
 - every selected file under `files/`.
 
 Confirm the authoritative prompt is current; requested and canonical paths are correct; selected bytes, sizes, and per-file SHA-256 hashes match; omissions are honest; and limits did not remove verdict-changing evidence.
+
+Inspect every member for credentials, secrets, private browser state, unnecessary personal data, and unrelated source. Redact or rebuild before transmission; never send a packet merely because the helper built it successfully.
 
 The manifest's canonical identity hashes the selected evidence description. Record the SHA-256 of the exact ZIP actually sent. ZIP member names, order, metadata, and bytes are deterministic for one build contract, but do not predict the whole-ZIP hash across different runtimes; hash the produced artifact.
 

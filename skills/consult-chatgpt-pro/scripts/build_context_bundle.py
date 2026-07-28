@@ -429,8 +429,8 @@ def stable_read(
             before = os.fstat(stream.fileno())
             data = stream.read() if max_bytes is None else stream.read(max_bytes + 1)
             after = os.fstat(stream.fileno())
+        endpoint = path.lstat()
         current = path.stat()
-        resolved = path.resolve(strict=True)
     except OSError as error:
         raise BundleError(
             "evidence-disappeared",
@@ -438,7 +438,8 @@ def stable_read(
             path=path.as_posix(),
         ) from error
     if (
-        resolved != path
+        is_reparse(path, endpoint)
+        or endpoint_identity(endpoint) != endpoint_identity(current)
         or (
             expected is not None
             and any(getattr(expected, field, None) != getattr(before, field, None) for field in IDENTITY_FIELDS)
@@ -459,6 +460,7 @@ def resolve_selected_path(
     raw: str,
     root: Path,
     *,
+    requested_root: Path,
     allow_outside_root: bool,
     label: str,
 ) -> tuple[Path, Path, EndpointBinding]:
@@ -472,7 +474,16 @@ def resolve_selected_path(
             path=raw,
         )
     requested = lexical_absolute(supplied if supplied.is_absolute() else root / supplied)
-    redirect = first_reparse_parent(requested, root)
+    requested_inside = is_within(requested, requested_root) or is_within(requested, root)
+    try:
+        redirect_root = (
+            requested_root
+            if requested_inside
+            else Path(os.path.commonpath((requested_root, requested)))
+        )
+    except ValueError:
+        redirect_root = Path(requested.anchor)
+    redirect = first_reparse_parent(requested, redirect_root)
     if redirect is not None:
         raise BundleError(
             "directory-reparse-point",
@@ -491,7 +502,7 @@ def resolve_selected_path(
         ) from error
     require_utf8_path(requested, field=label)
     require_utf8_path(canonical, field=label)
-    outside = not is_within(requested, root) or not is_within(canonical, root)
+    outside = not requested_inside or not is_within(canonical, root)
     if outside and not allow_outside_root:
         raise BundleError(
             "outside-root",
@@ -582,6 +593,8 @@ def preflight(args: argparse.Namespace) -> Config:
     if args.out:
         supplied = Path(args.out)
         out = lexical_absolute(supplied if supplied.is_absolute() else root / supplied)
+        if is_within(out, requested_root):
+            out = root / out.relative_to(requested_root)
         if out.suffix.casefold() != ".zip":
             raise BundleError("invalid-output", "--out must be an exact .zip path.", exit_code=2)
         validate_output_parent(out, exit_code=2)
@@ -600,6 +613,7 @@ def preflight(args: argparse.Namespace) -> Config:
         _, prompt_file, prompt_binding = resolve_selected_path(
             args.prompt_file,
             root,
+            requested_root=requested_root,
             allow_outside_root=args.allow_outside_root,
             label="prompt_file",
         )
@@ -1036,6 +1050,7 @@ def collect_candidates(
         requested, canonical, endpoint_binding = resolve_selected_path(
             raw,
             config.root,
+            requested_root=config.root_binding.requested,
             allow_outside_root=config.allow_outside_root,
             label="include",
         )
@@ -1701,6 +1716,7 @@ def publish_atomic(
     after_commit: Callable[[Path], None] | None = None,
 ) -> bytes:
     validate_output_parent(destination)
+    destination = destination.parent.resolve(strict=True) / destination.name
     temporary: Path | None = None
     temporary_owner: tuple[object, ...] | None = None
     publication_committed = False

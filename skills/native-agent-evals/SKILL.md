@@ -40,7 +40,7 @@ Consume and verify the child final answer. Status is lifecycle evidence, not tas
 
 ## Audit rollouts
 
-Read [references/rollout-audit.md](references/rollout-audit.md) before inspecting Windows or WSL JSONL, classifying invocation, or deduplicating resumed history.
+Read [references/rollout-audit.md](references/rollout-audit.md) before inspecting Windows, macOS, or WSL JSONL, classifying invocation, or deduplicating resumed history.
 
 Parse JSONL structurally. Treat raw `rg` matches as candidate locations only. Exclude the current audit family. Report exact session IDs, source paths, call IDs, names, namespaces, arguments, outputs, and status transitions.
 
@@ -55,6 +55,8 @@ For outbound evidence, use `scripts/export_structural_rollout.py` with a schema-
   classification, and fail-closed promotion-candidate gates.
 
 Never attach a source rollout or hand-author evidence presented as independently auditable.
+
+Before transmitting an extract, inspect it for credentials, secrets, private browser state, unnecessary personal data, and unrelated records. If safe redaction would break exactness, keep the extract local and narrow or block the outbound review.
 
 ## Report
 

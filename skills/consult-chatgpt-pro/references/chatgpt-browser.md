@@ -46,6 +46,7 @@ Immediately before sending, confirm:
 - The exact bundle or pasted packet is visibly present.
 - Any required binary evidence is visibly present.
 - No unintended stale attachment or saved-file reference is present.
+- The transmitted material was inspected and contains no credentials, secrets, private browser state, unnecessary personal data, or unrelated source.
 
 After sending, record the conversation URL, internal sequence, bundle hash, reasoning mode, and send outcome in the private ledger.
 

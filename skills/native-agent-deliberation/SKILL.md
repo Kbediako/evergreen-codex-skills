@@ -32,7 +32,7 @@ Give each viewpoint a bounded question and only the evidence it needs. Ask for:
 - confidence and missing facts,
 - a condition that would reverse the recommendation.
 
-Use the tool's structured role controls when needed. Do not put role or `agent_type` markers in prompt text.
+Use the tool's structured role controls when needed. Include a role or `agent_type` prompt marker only when a higher-priority instruction requires it.
 
 ## Synthesize
 

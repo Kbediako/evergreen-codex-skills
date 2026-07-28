@@ -17,6 +17,8 @@ Keep the consultation inside the user's task and success criteria. Treat suggest
 
 Include only task-relevant evidence the user has authorized and preserve it faithfully.
 
+Treat every upload or paste as external data transmission. Before building or sending a packet, inspect the exact selected files and generated artifact; omit or redact credentials, secrets, private browser state, unnecessary personal data, and unrelated source. If required evidence cannot be shared safely, narrow the review or mark it `BLOCKED`.
+
 Never attach a source rollout or conversation export. Obtain rollout-derived evidence only through the typed structural exporter in `native-agent-evals`.
 
 If required context is unavailable, narrow the requested verdict explicitly or mark the consultation `BLOCKED`.

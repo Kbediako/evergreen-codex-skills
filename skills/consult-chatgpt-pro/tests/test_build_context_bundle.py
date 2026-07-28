@@ -17,6 +17,8 @@ from unittest import mock
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "build_context_bundle.py"
+ORIGINAL_TEMPDIR = tempfile.tempdir
+ORIGINAL_TMPDIR = os.environ.get("TMPDIR")
 
 
 def load_builder():
@@ -30,6 +32,20 @@ def load_builder():
 
 
 BUILDER = load_builder()
+
+
+def setUpModule() -> None:
+    if sys.platform == "darwin":
+        tempfile.tempdir = str(Path(tempfile.gettempdir()).resolve(strict=True))
+        os.environ["TMPDIR"] = tempfile.tempdir
+
+
+def tearDownModule() -> None:
+    tempfile.tempdir = ORIGINAL_TEMPDIR
+    if ORIGINAL_TMPDIR is None:
+        os.environ.pop("TMPDIR", None)
+    else:
+        os.environ["TMPDIR"] = ORIGINAL_TMPDIR
 
 
 class ContextBundleTests(unittest.TestCase):
@@ -1056,11 +1072,14 @@ class ContextBundleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             raw_name = b"bad-\xff.txt"
-            descriptor = os.open(
-                os.fsencode(root) + b"/" + raw_name,
-                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
-                0o600,
-            )
+            try:
+                descriptor = os.open(
+                    os.fsencode(root) + b"/" + raw_name,
+                    os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                    0o600,
+                )
+            except OSError as error:
+                self.skipTest(f"Filesystem does not support non-UTF-8 names: {error}")
             try:
                 os.write(descriptor, b"EVIDENCE")
             finally:
@@ -1128,7 +1147,7 @@ class ContextBundleTests(unittest.TestCase):
             artifact = Path(payload["artifact"])
             try:
                 self.assertTrue(artifact.is_file())
-                self.assertEqual(artifact.parent, Path(tempfile.gettempdir()))
+                self.assertEqual(artifact.parent, Path(tempfile.gettempdir()).resolve(strict=True))
                 self.assertEqual(sorted(path.name for path in root.iterdir()), ["evidence.txt"])
                 with zipfile.ZipFile(artifact) as archive:
                     self.assertEqual(
@@ -1142,6 +1161,27 @@ class ContextBundleTests(unittest.TestCase):
                     )
             finally:
                 artifact.unlink(missing_ok=True)
+
+    @unittest.skipUnless(sys.platform == "darwin", "macOS system path alias")
+    def test_macos_var_alias_accepts_absolute_root_prompt_evidence_and_output(self) -> None:
+        with tempfile.TemporaryDirectory(dir="/private/var/tmp") as temp:
+            canonical_root = Path(temp)
+            alias_root = Path("/var/tmp") / canonical_root.name
+            (canonical_root / "prompt.md").write_text("Review.", encoding="utf-8")
+            (canonical_root / "evidence.txt").write_text("Evidence.", encoding="utf-8")
+            result, payload = self.run_cli(
+                alias_root,
+                "--prompt-file",
+                str(alias_root / "prompt.md"),
+                "--include",
+                str(alias_root / "evidence.txt"),
+                "--out",
+                str(alias_root / "bundle.zip"),
+                prompt=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(Path(payload["artifact"]), canonical_root / "bundle.zip")
+            self.assertTrue((canonical_root / "bundle.zip").is_file())
 
     def test_default_output_parent_must_preexist_as_a_real_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

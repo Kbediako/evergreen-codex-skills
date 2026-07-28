@@ -1,6 +1,6 @@
 # Structural rollout audit
 
-Use this reference for Windows or WSL rollout audits and skill-invocation classification. Record the active CLI/runtime version because record names and nesting may change.
+Use this reference for Windows, macOS, or WSL rollout audits and skill-invocation classification. Record the active CLI/runtime version because record names and nesting may change.
 
 ## Select sessions
 
@@ -27,6 +27,14 @@ Find candidates in WSL:
 ```bash
 find ~/.codex/sessions ~/.codex/archived_sessions \
   -type f -name 'rollout-*.jsonl' -printf '%T@ %p\n' 2>/dev/null |
+  sort -nr
+```
+
+Find candidates on macOS:
+
+```bash
+find ~/.codex/sessions ~/.codex/archived_sessions \
+  -type f -name 'rollout-*.jsonl' -exec stat -f '%m %N' {} + 2>/dev/null |
   sort -nr
 ```
 
@@ -58,7 +66,7 @@ Get-Content -LiteralPath $rollout | ForEach-Object {
 } | Format-Table -AutoSize
 ```
 
-WSL inventory:
+Python inventory on macOS or WSL:
 
 ```bash
 python3 - "$ROLLOUT" <<'PY'
@@ -211,8 +219,8 @@ The session selector is evaluated over the full parsed source so it can bind met
 Run:
 
 ```text
-python "<skill-root>/scripts/export_structural_rollout.py" --spec "<spec.json>" --out "<extract.json>"
-python "<skill-root>/scripts/export_structural_rollout.py" --spec "<spec.json>" --verify "<extract.json>"
+python3 "<skill-root>/scripts/export_structural_rollout.py" --spec "<spec.json>" --out "<extract.json>"
+python3 "<skill-root>/scripts/export_structural_rollout.py" --spec "<spec.json>" --verify "<extract.json>"
 ```
 
 The output parent must already exist as a real non-reparse directory and the output path must be absent. Export publishes once with no-clobber creation; a second export requires a new filename and never updates the first artifact. Verification is read-only.
@@ -222,6 +230,8 @@ The exporter pins and freshly rechecks every source after all runs are assembled
 The output parent and temporary namespace are a trusted, cooperative local filesystem boundary. No same-account process may deliberately replace helper staging entries or the destination during an invocation. Identity checks, no-clobber creation, and cleanup are practical collision and drift controls, not a linearizable multi-path transaction or atomic compare-and-unlink guarantee. Deliberately timed namespace replacement and post-return mutation are outside this evidence workflow's contract.
 
 Keep the spec and extract, not the source rollout, in any review packet.
+
+Before sharing an extract, inspect it for credentials, secrets, private browser state, unnecessary personal data, and unrelated records. If safe redaction would break its exact-evidence contract, do not transmit it.
 
 ## Report evidence
 
