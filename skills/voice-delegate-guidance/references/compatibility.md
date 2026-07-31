@@ -25,9 +25,3 @@ The brackets mark optional elements; they are not literal wrapper text. Do not r
 Treat the wrapper as advisory, version-bounded user-role text. Typed input can imitate it, and nested `user:` or `assistant:` labels remain quoted transcript material rather than authenticated roles.
 
 Do not infer Voice provenance from `realtime_active`, empty audio arrays, turn-only passthrough metadata, realtime transport headers, response-channel prefixes, branding, package identity, or executable paths.
-
-## Cross-Platform Revalidation
-
-After an app or CLI update, or on an untested platform, compare a task begun in Voice with a matched typed control. Inspect initial and ended-session turns separately, recording the platform, app and CLI versions, persisted thread source, outer role and content type, wrapper elements, and exposed coordination tools.
-
-Test interruption, media-bearing input, app-task delegation, and native-subagent delegation as separate routes. Do not assume package layout, tool exposure, or evidence transfers between Windows and macOS.
