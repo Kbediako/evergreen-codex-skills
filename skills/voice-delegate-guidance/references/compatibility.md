@@ -2,9 +2,11 @@
 
 ## Stable Contract
 
-The [supported Voice contract](https://learn.chatgpt.com/docs/features/voice) is the product boundary: a chat or task must begin in Voice to use live Voice; Voice may start, inspect, and steer separate tasks; and directed tasks retain their ordinary permissions.
+Follow the [supported Voice contract](https://learn.chatgpt.com/docs/features/voice) and the active host's capabilities and permissions. Where available, Voice can start in a new or existing task, including one that began with typed messages. Voice can start, inspect, and steer tasks subject to their ordinary permissions.
 
 Apply this skill only after an operative Voice-to-Codex `realtime_delegation` handoff, or when the user explicitly requests delegate-only Voice coordinator mode. Its stricter delegation of substantive action is custom guidance, not a claim that the product dispatches every Voice request.
+
+On Windows, macOS, or connected hosts, use the capabilities available to the context performing the action. Recognizing a handoff does not establish that live Voice is still active or that a worker shares the coordinator's tools, screen context, browser session, permissions, or host access. Resolve uncertain eligibility against the active tool contract and available context; report a blocker when no eligible delegated route exists.
 
 App-level task tools and Codex native-subagent tools are separate coordination surfaces. Do not substitute one for the other. Let the dependency skills named in `SKILL.md` govern native-agent mechanics.
 
