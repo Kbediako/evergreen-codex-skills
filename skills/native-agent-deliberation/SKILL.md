@@ -8,7 +8,7 @@ description: Frame consequential or ambiguous decisions through distinct evidenc
 ## Set The Decision
 
 1. State one decision question.
-2. List hard constraints, success criteria, and decision deadline.
+2. List hard constraints, success criteria, and any real decision deadline; record "none specified" when absent.
 3. Separate known evidence from assumptions.
 4. Identify what would change the decision.
 5. Keep implementation outside scope unless the user also authorizes it.
@@ -42,7 +42,7 @@ Use the tool's structured role controls when needed. Do not put role or `agent_t
 4. Distinguish evidence, inference, and preference.
 5. Recommend one path, defer, or ask for one blocking fact.
 6. Name the strongest dissent and what would change the decision.
-7. Give the next concrete action without starting unrequested implementation.
+7. After deciding, continue work already authorized by the user. Otherwise give the next concrete action without starting unrequested implementation.
 
 ## Return
 
