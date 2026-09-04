@@ -74,7 +74,7 @@ Continue useful parent work while children run. Use:
 
 Do not describe `wait_agent` as polling. Use the longest bounded mailbox wait compatible with the host's user-update rules and the current decision point; do not loop a short timer merely to generate activity. On timeout, say only that no update arrived, continue useful work, or enter another mailbox wait when the result remains blocking. Do not call `list_agents` solely because a wait timed out.
 
-Before interruption for lateness, request a checkpoint, wait a reasonable window, and compare against the recorded hard decision point. Inspect the interrupt result; `previous_status.completed` means the child completed by interrupt time.
+For lateness-based interruption, plan a checkpoint before the recorded hard decision point and allow a response window only while the actual deadline, resource, and safety boundaries permit it. Skip the wait when no supported window fits; checkpointing does not extend a real boundary. An explicit user stop or urgent authority, safety, or resource boundary takes precedence. Inspect the interrupt result; `previous_status.completed` means the child completed by interrupt time.
 
 If it is not already active, load `wait-for-subagents-patiently` for detailed budgets, stall evidence, long-running work, or intervention decisions. Never recursively reload it. Explicit domain patience rules, including "do not force an answer," override generic elapsed-time guidance.
 
@@ -85,7 +85,7 @@ After resume, steering, compaction, or a new user message:
 1. Call `list_agents`.
 2. Recover queued or final messages and inspect expected artifacts when status is incomplete.
 3. Reuse, steer, wait for, follow up, or explicitly supersede the existing child.
-4. Start a replacement only when the original is obsolete, irrecoverable, outside scope, or past its hard decision point after checkpointing; it remains subject to the child-run and progress-delta gates.
+4. Start a replacement only when the original is obsolete, irrecoverable, outside scope, or past its hard decision point under the checkpoint policy above; it remains subject to the child-run and progress-delta gates.
 
 Runs launched from the same parent state form a batch. The initial batch needs budget but no prior delta. Before any later batch—including a follow-up, retry, replacement, or nested run—require both unreserved budget and a new parent-owned delta recorded after the preceding batch: an integrated artifact, newly passed proof, closed decision, verified evidence, or advanced goal metric. A consumed child answer counts only after parent verification or integration. A delta unlocks one declared batch and never replenishes the cap. Without both, consolidate or execute in the parent.
 

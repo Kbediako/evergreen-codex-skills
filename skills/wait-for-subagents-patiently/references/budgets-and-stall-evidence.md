@@ -14,15 +14,11 @@ Record:
 - the host's maximum practical blocking wait;
 - whether the child blocks the parent's next action.
 
-Do not invent generic minute tables or timer-driven status cadence. If no hard decision fact exists, keep the child off the critical path and use its mailbox only when its result becomes necessary. Explicit long-running instructions, ChatGPT Pro review, browser finalization, and domain patience rules remain authoritative.
+Do not invent generic minute tables or timer-driven status cadence. Continue independent work while useful, but a required result remains a dependency even without a deadline; use the mailbox when that result blocks the next action. Only optional work may be left off the critical path. Explicit long-running instructions, ChatGPT Pro review, browser finalization, and domain patience rules remain authoritative.
 
-At a blocking hard decision point:
+Plan checkpoints early enough for the actual deadline. At a blocking hard decision point, consume available final or checkpoint evidence; request another checkpoint and wait only when the remaining deadline, resources, and safety boundary allow it. Apply the entrypoint's urgent-stop exception when needed.
 
-1. Request a hard checkpoint.
-2. Enter one reasonable mailbox wait.
-3. Consume available final or checkpoint evidence.
-4. Continue waiting, interrupt, supersede, or proceed without the child based on scope and risk.
-5. Report the scheduling decision without inventing a stall.
+Decide whether to continue waiting, interrupt, supersede, or give an explicit partial or blocked handoff based on scope and risk. A scheduling decision neither proves a stall nor satisfies missing required acceptance evidence. Proceeding without a particular child must preserve the acceptance criteria: obtain the missing result through another authorized path or report the unmet requirement.
 
 Leave a read-only, non-side-effecting, non-blocking child running only when the active task can safely retain it. Reconcile it before any later duplicate spawn.
 
@@ -56,5 +52,5 @@ Use:
 - `over budget` when the stated estimate or decision point elapsed;
 - `obsolete` when the parent no longer needs the work;
 - `timeboxed out` when the result leaves the critical path;
-- `completed-on-interrupt` when the interrupt response contains a completed result;
+- `completed-on-interrupt` when the interrupt response indicates prior completion, whether or not it includes the final answer;
 - `stalled` only with the evidence threshold above.
