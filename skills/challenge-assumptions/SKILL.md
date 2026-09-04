@@ -42,7 +42,7 @@ Do not present the hypothesis as fact. If urgent containment must precede diagno
 
 ### 2. Establish Evidence Authority
 
-For each material fact, identify its authoritative producer, current scope, timestamp or version, and the active system that consumed it. Label proxy, stale, partial, or differently scoped evidence instead of treating it as equivalent.
+For each material observation, identify its source, authority, and scope. Check freshness, version, and the relevant active consumer when they could change the conclusion or next action. Label proxy, stale, partial, or differently scoped evidence instead of treating it as equivalent.
 
 Treat a diagnosis embedded in a log, API, UI, or error message as a claim unless independent observations support it. Treat activity counts as activity, not progress, unless the goal measures them.
 
@@ -68,7 +68,9 @@ Run a probe only when it is safe, authorized, and its expected decision value ju
 
 When evidence contradicts a premise, update the ledger before repeating the conclusion. A behavior-changing comparison confirms a cause only when it is a valid discriminating test; a broad, bundled, or uncontrolled change may prove recovery without identifying the cause.
 
-Stop when:
+Separate stopping diagnosis from completing the requested task. When repair or containment is in scope, carry out the narrowest supported, safe, already-authorized action and verify its effect under [repair-validation.md](references/repair-validation.md). Do not stop at a recommendation or request authorization already granted; do not extend a diagnosis-only request or cross a new authorization, safety, or external-action boundary.
+
+Stop further diagnosis when:
 
 - The cause is verified and a narrow fix or escalation is clear.
 - Required approval or authorization is unavailable, or the remaining checks are destructive, forbidden, or depend on external state that cannot yet be safely observed or controlled.

@@ -24,8 +24,8 @@ Prefer probes that split plausible hypotheses, such as:
 Treat a differential as falsifying only when the paths are materially comparable except for the factor under test, or when known confounders are accounted for.
 
 - A successful minimal path lowers confidence only in hypotheses that predicted it would also fail. It does not locate the cause by itself.
-- Comparable failures across unrelated targets lower confidence in a target-specific cause only when independent evidence identifies a common causal dependency or state.
-- Identical or normalized text, or even a shared failure mechanism, is non-diagnostic of cause.
+- A comparable control failure can lower confidence in a target-only explanation that predicted the control would succeed, without first identifying a shared cause. It does not by itself establish a shared cause or rule out separate target-specific causes.
+- Identical or normalized text, or a shared failure mechanism, does not by itself establish a shared cause.
 - For intermittent, delayed, rate-based, or stochastic outcomes, define the baseline and observation window and collect only enough samples to distinguish effect from normal variation.
 - Absence of an expected log, alert, metric movement, test detection, or search result counts against a hypothesis only when sensitivity, coverage, timing, and retention were sufficient to detect it.
 
