@@ -45,7 +45,7 @@ Provider documentation alone does not make a path available. Do not replace an a
 - A scheduled pull-only monitor performs one provider-compliant pull per wake; scheduling does not turn pull polling into an event wait.
 - If the scheduled context cannot use the former path, rerun the observation hierarchy there. When no compatible scheduled path is verified, return `needs-scheduled-handoff` with the preserved monitor state. This is nonterminal and is not an observation failure.
 
-The optional Sol Medium role in [references/awaiter-role.toml](references/awaiter-role.toml) is an active-turn external observer template, not an auto-registered agent. Install it as `awaiter.toml` under the user or project `.codex/agents/` directory, start a fresh task so the role catalog reloads, and verify the resolved role before first use. Its read-only sandbox is defense in depth, not proof against live parent overrides or mutating connectors. When hard isolation is required and cannot be verified, keep the monitor in the parent or use an isolated observer.
+The optional Astra Medium role in [references/awaiter-role.toml](references/awaiter-role.toml) is an active-turn external observer template, not an auto-registered agent. Install it as `awaiter.toml` under the user or project `.codex/agents/` directory, start a fresh task so the role catalog reloads, and verify the resolved role before first use. Its read-only sandbox is defense in depth, not proof against live parent overrides or mutating connectors. When hard isolation is required and cannot be verified, keep the monitor in the parent or use an isolated observer.
 
 ## Observe To Terminal State
 

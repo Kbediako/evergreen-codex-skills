@@ -24,11 +24,11 @@ Load any task-domain skill as well. Let the domain skill govern the work and use
 
 ## Decide
 
-1. Identify the requested outcome and authority boundary.
+1. Identify the requested outcome, acceptance criteria, and existing authorization.
 2. Check whether work is independent enough to benefit from native agents.
 3. Select the narrowest route above.
 4. Load the selected skill before acting.
-5. Follow only that skill's workflow and acceptance criteria.
+5. Apply the selected workflow while preserving the user's acceptance criteria and existing authorization. Internal workflow checkpoints do not create new approval requirements.
 6. Verify the integrated result before handoff.
 
 Do not copy lifecycle, model, fanout, budget, brief, or resume rules into this router. Treat `native-subagents-first` as the sole contract for those concerns.

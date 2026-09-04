@@ -55,7 +55,7 @@ Classify every new post-change finding at the missing-rule and representation or
 
 1. Assign one accountable matrix owner and list every implementation surface. State the governing invariant and make one bounded matrix: `finite scope and exclusions | equivalence class | representative | expected invariant | local check | result`. Cover affected operations, representations, lifecycle boundaries, platforms, and negative boundaries. Merge cases only when the same mechanism justifies them; otherwise split them.
 2. Resolve or disposition every class and every transitively affected surface.
-3. Give a fresh-context local Sol high-reasoning reviewer the matrix and candidate and ask it to find an unrepresented same-family counterexample. This is a local falsification step, not a Pro review. Any successful counterexample reopens the matrix.
+3. Give a fresh-context local Astra high-reasoning reviewer the matrix and candidate and ask it to find an unrepresented same-family counterexample. This is a local falsification step, not a Pro review. Any successful counterexample reopens the matrix.
 4. Freeze the exact validated source and test bytes and hashes. Rerun validation and regenerate only derived results, counts, summaries, manifests, hashes, and the packet from that candidate; then independently verify the packet against the frozen sources. Any frozen-byte change invalidates the derived evidence and reopens the matrix.
 5. Send one brand-new full-scope Pro conversation the original contract, complete current scope, matrix, dispositions, frozen identities, and regenerated evidence. Ask for unresolved material findings across the whole scope, not confirmation of the latest fix.
 

@@ -1,6 +1,6 @@
 ---
 name: native-subagents-first
-description: Coordinate bounded native Multi-Agent V2 work when the user asks for subagents, parallel agents, multi-agent implementation or review, or when an active native-agent workflow has genuinely independent streams. Use for GPT-5.6 Sol role selection, context inheritance, ownership, fanout, progress gates, and parent synthesis.
+description: Coordinate bounded native Multi-Agent V2 work when the user asks for subagents, parallel agents, multi-agent implementation or review, or when an active native-agent workflow has genuinely independent streams. Use for GPT-6 Astra role selection, context inheritance, ownership, fanout, progress gates, and parent synthesis.
 ---
 
 # Native Subagents First
@@ -30,9 +30,9 @@ A child run is one task started by `spawn_agent` or `followup_task` at any depth
 
 Do not rename or subdivide a milestone to reset its cap. Preserve its ID, initial cap, used count, nested reservations, remaining budget, and latest parent progress delta across resumes, steering, compaction, and automatic continuation.
 
-## Route GPT-5.6 Sol
+## Route GPT-6 Astra
 
-Use GPT-5.6 Sol only. Read [references/sol-routing.md](references/sol-routing.md) before choosing effort, a custom role, or inherited context.
+Use GPT-6 Astra only. Read [references/astra-routing.md](references/astra-routing.md) before choosing effort, a custom role, or inherited context.
 
 | Role | Effort | Default use |
 | --- | --- | --- |
@@ -59,7 +59,7 @@ Read [references/briefs-and-ledger.md](references/briefs-and-ledger.md) before t
 - Let agents message relevant peers directly when they discover a dependency; require the receiving agent and parent to get the concise evidence handoff.
 - Use tool fields for model, effort, role, and history. Do not put tool-field pseudo-markers in the child prompt.
 - Ask critics for symptoms, measurements, reproduction, and uncertainty—not a dictated repair.
-- If evidence falsifies the brief's mechanism, require the worker to report the contradiction and replacement hypothesis. The worker stays inside its authority; scope or architecture changes remain with the parent or user.
+- If evidence falsifies the brief's mechanism, require the worker to report the contradiction and replacement hypothesis. The worker stays inside its authority. The parent resolves scope or architecture changes within existing user authorization; seek user input only when the change requires new authority or an essential decision.
 
 Maintain a compact ledger with the stable milestone ID, scope keys, ownership, child-run cap, spawn/follow-up/nested counts, reservations, remaining budget, launch batches, progress deltas, lifecycle state, received evidence, and terminal synthesis point. Announce skill use once per logical chain; later updates should report only material scope, budget, or state changes.
 
@@ -89,7 +89,7 @@ After resume, steering, compaction, or a new user message:
 
 Runs launched from the same parent state form a batch. The initial batch needs budget but no prior delta. Before any later batch—including a follow-up, retry, replacement, or nested run—require both unreserved budget and a new parent-owned delta recorded after the preceding batch: an integrated artifact, newly passed proof, closed decision, verified evidence, or advanced goal metric. A consumed child answer counts only after parent verification or integration. A delta unlocks one declared batch and never replenishes the cap. Without both, consolidate or execute in the parent.
 
-Use one read-only reviewer for each stable evidence-bearing checkpoint. Do not review moving scope. Two consecutive review cycles without new implementation or evidence stop further review until the state materially changes.
+Use one read-only reviewer when independent review is required or would resolve a named uncertainty at a stable evidence-bearing checkpoint. Do not review moving scope. Two consecutive review cycles without new implementation or evidence stop further review until the state materially changes.
 
 After a failed or regressive repair wave, stop equivalent fanout and run a diagnosis checkpoint before assigning another fix.
 
@@ -97,6 +97,8 @@ After a failed or regressive repair wave, stop equivalent fanout and run a diagn
 
 - Consume each required child's actual final answer; `completed` status alone is not a result.
 - Verify important claims against current files, commands, tests, logs, or UI state.
+- Reuse scoped child evidence after checking its relevance and artifact identity. Repeat exploration or checks only to resolve a specific gap, conflict, integration risk, or changed state.
+- Run checks appropriate to the affected behavior and all required project checks. Once those pass, broaden or repeat testing only when new changes, failures, or unresolved concerns justify it.
 - Compare post-work state with the baseline. For read-only scopes, investigate any change before using the result.
 - Classify write changes by declared ownership and preserve unrelated user work.
 - Report the outcome, changed files, validation, child lifecycle facts that matter, omitted results, remaining risks, and open blockers.

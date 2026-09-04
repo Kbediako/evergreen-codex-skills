@@ -1,6 +1,6 @@
 ---
 name: native-agent-skill-validation
-description: Forward-test an existing or changed Codex skill with fresh, contamination-resistant native-agent trials. Use to test whether instructions trigger, generalize, and change behavior under a fixed Sol worker condition; do not use to create or update the skill itself.
+description: Forward-test an existing or changed Codex skill with fresh, contamination-resistant native-agent trials. Use to test whether instructions trigger, generalize, and change behavior under a fixed Astra worker condition; do not use to create or update the skill itself.
 ---
 
 # Native Agent Skill Validation
@@ -24,7 +24,7 @@ Load [native-subagents-first](../native-subagents-first/SKILL.md) before using n
 
 Compare treatment and control with:
 
-- the same Sol model and reasoning effort;
+- the same Astra model and reasoning effort;
 - the same role, tool surface, prompt, permissions, and artifact snapshot;
 - a fresh child and uncontaminated workspace state for every trial;
 - neutral model-visible trial identities generated before condition assignment;
@@ -66,7 +66,7 @@ Check whether:
 ## Report
 
 - Candidate skill and behavior claim.
-- Fixed Sol worker condition.
+- Fixed Astra worker condition.
 - Control and treatment prompts.
 - Trial count and fresh-state method.
 - Exact skill availability/revisions, prompt and policy bytes/hashes/diff, neutral assignment, run order, workspace manifests, and rollout IDs.

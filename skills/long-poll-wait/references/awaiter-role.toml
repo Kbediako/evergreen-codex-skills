@@ -1,6 +1,6 @@
 name = "awaiter"
-description = "Advisory observation-only active-turn awaiter using GPT-5.6 Sol at Medium."
-model = "gpt-5.6-sol"
+description = "Advisory observation-only active-turn awaiter using GPT-6 Astra at Medium."
+model = "gpt-6-astra"
 model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 background_terminal_max_timeout = 3600000

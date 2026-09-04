@@ -16,7 +16,7 @@ Load [native-subagents-first](../native-subagents-first/SKILL.md) before running
 
 ## Hold the worker fixed
 
-Compare treatment and control under the same Sol worker condition:
+Compare treatment and control under the same Astra worker condition:
 
 - model, effort, role, tool surface, prompt, permissions, and artifact state stay fixed;
 - only the named treatment changes;
