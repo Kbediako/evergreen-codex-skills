@@ -9,6 +9,7 @@ import os
 import re
 import stat
 import tempfile
+import uuid
 import zipfile
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -118,6 +119,7 @@ class Config:
     max_file_bytes: int
     max_total_bytes: int
     out: Path | None
+    staging_directory: CreatedDirectory | None = None
 
 
 @dataclass(frozen=True)
@@ -131,6 +133,7 @@ class Candidate:
     endpoint_binding: EndpointBinding | None = None
     expected_identity: tuple[object, ...] | None = None
     expected_sha256: str | None = None
+    validation_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -923,19 +926,16 @@ def walk_directory(
 def validate_directory_snapshots(
     snapshots: list[DirectorySnapshot],
     *,
-    ignored_path: Path | None = None,
+    ignored_paths: tuple[Path, ...] = (),
 ) -> None:
     for snapshot in snapshots:
         directory = snapshot.binding.canonical
-        ignore_publication_temp = (
-            ignored_path is not None
-            and ignored_path.parent == directory
-        )
+        ignore_owned_artifacts = any(path.parent == directory for path in ignored_paths)
         validate_endpoint(
             snapshot.binding,
             code="evidence-changed",
             message="A selected directory changed before publication.",
-            allow_directory_metadata_change=ignore_publication_temp,
+            allow_directory_metadata_change=ignore_owned_artifacts,
         )
         try:
             entries = sorted(
@@ -949,7 +949,7 @@ def validate_directory_snapshots(
                     is_reparse(directory / entry.name, info),
                 )
                 for entry in entries
-                if ignored_path is None or directory / entry.name != ignored_path
+                if directory / entry.name not in ignored_paths
                 for info in ((directory / entry.name).lstat(),)
             )
         except OSError as error:
@@ -976,7 +976,7 @@ def validate_directory_snapshots(
             snapshot.binding,
             code="evidence-changed",
             message="A selected directory changed before publication.",
-            allow_directory_metadata_change=ignore_publication_temp,
+            allow_directory_metadata_change=ignore_owned_artifacts,
         )
 
 
@@ -989,19 +989,35 @@ def validate_source_snapshot(
     *,
     ignored_path: Path | None = None,
 ) -> None:
+    def validate_stage() -> Path | None:
+        binding = config.staging_directory
+        if binding is None:
+            return None
+        try:
+            observed = binding.path.lstat()
+            canonical = binding.path.resolve(strict=True)
+        except OSError as error:
+            raise BundleError("artifact-changed", "The owned staging directory disappeared.") from error
+        if (
+            not stat.S_ISDIR(observed.st_mode)
+            or is_reparse(binding.path, observed)
+            or endpoint_owner_identity(observed) != binding.owner
+        ):
+            raise BundleError("artifact-changed", "The owned staging directory changed.")
+        return canonical
+
     def validate_root() -> None:
         if config.includes or config.whole_repo:
             validate_endpoint(
                 config.root_binding,
                 code="evidence-changed",
                 message="The selected root changed before publication.",
-                allow_directory_metadata_change=(
-                    ignored_path is not None
-                    and ignored_path.parent == config.root
-                ),
+                allow_directory_metadata_change=any(path.parent == config.root for path in ignored_paths),
             )
 
     validate_prompt_snapshot(config, prompt)
+    staging_path = validate_stage()
+    ignored_paths = tuple(path for path in (ignored_path, staging_path) if path is not None)
     validate_root()
     for candidate in candidates:
         validate_candidate(candidate)
@@ -1017,11 +1033,13 @@ def validate_source_snapshot(
             )
     validate_directory_snapshots(
         directory_snapshots,
-        ignored_path=ignored_path,
+        ignored_paths=ignored_paths,
     )
     for candidate in candidates:
         validate_candidate(candidate)
     validate_root()
+    if validate_stage() != staging_path:
+        raise BundleError("artifact-changed", "The owned staging directory changed during source validation.")
 
 
 def collect_candidates(
@@ -1114,6 +1132,7 @@ def collect_candidates(
         )
 
     deduplicated: dict[Path, Candidate] = {}
+    validation_only: list[Candidate] = []
     for candidate in sorted(
         candidates,
         key=lambda item: (
@@ -1127,6 +1146,8 @@ def collect_candidates(
         ),
     ):
         if prompt_path is not None and candidate.canonical == prompt_path:
+            if candidate.explicit_file:
+                validation_only.append(replace(candidate, validation_only=True))
             omissions.append(
                 {
                     "path": candidate.requested_display,
@@ -1137,6 +1158,8 @@ def collect_candidates(
             continue
         existing = deduplicated.get(candidate.canonical)
         if existing is not None:
+            if candidate.explicit_file:
+                validation_only.append(replace(candidate, validation_only=True))
             omissions.append(
                 {
                     "path": candidate.requested_display,
@@ -1147,7 +1170,7 @@ def collect_candidates(
             )
             continue
         deduplicated[candidate.canonical] = candidate
-    return list(deduplicated.values()), omissions, snapshots
+    return list(deduplicated.values()) + validation_only, omissions, snapshots
 
 
 def bind_candidate_fingerprints(
@@ -1160,6 +1183,9 @@ def bind_candidate_fingerprints(
     remaining = config.max_total_bytes - prompt_bytes
     bound: list[Candidate] = []
     for candidate in candidates:
+        if candidate.validation_only:
+            bound.append(candidate)
+            continue
         if candidate.expected_identity is None:
             bound.append(candidate)
             continue
@@ -1266,6 +1292,9 @@ def capture_candidates(
     file_count = 1
     used_paths: set[str] = set()
     for candidate in candidates:
+        if candidate.validation_only:
+            # Full snapshot validation checks prompt drift before these endpoints.
+            continue
         validate_candidate(candidate)
         try:
             initial = candidate.canonical.stat()
@@ -1724,6 +1753,7 @@ def publish_atomic(
             os.fsync(stream.fileno())
         try:
             temporary_stat = temporary.lstat()
+            temporary_canonical = temporary.resolve(strict=True)
         except OSError as error:
             raise BundleError(
                 "artifact-changed",
@@ -1738,14 +1768,14 @@ def publish_atomic(
             )
         temporary_binding = bind_observed_endpoint(
             temporary,
-            temporary,
+            temporary_canonical,
             temporary_stat,
         )
         if before_commit is not None:
             before_commit(temporary)
         try:
             committed = stable_read(
-                temporary,
+                temporary_canonical,
                 expected=temporary_stat,
                 max_bytes=len(data),
             )
@@ -1828,16 +1858,8 @@ def default_destination(config: Config, artifact_identity: str) -> Path:
     directory = Path(tempfile.gettempdir())
     validate_output_parent(directory / "reservation.zip")
     prefix = f"{slugify(config.title)}-{artifact_identity[:12]}-"
-    file_descriptor, name = tempfile.mkstemp(
-        prefix=prefix,
-        suffix=".zip",
-        dir=directory,
-    )
-    os.close(file_descriptor)
-    path = Path(name)
-    path.unlink()
-    validate_output_parent(path)
-    return path
+    # Publication enforces no-overwrite; name selection need not mutate sources.
+    return directory / f"{prefix}{uuid.uuid4().hex}.zip"
 
 
 def build_bundle(config: Config) -> dict:
@@ -1902,6 +1924,7 @@ def build_bundle(config: Config) -> dict:
         path=stage,
         owner=endpoint_owner_identity(stage.lstat()),
     )
+    config = replace(config, staging_directory=stage_binding)
     staged_zip = stage / "artifact.zip"
     staged_binding: CreatedDirectory | None = None
     stage_cleaned = False
@@ -1944,7 +1967,7 @@ def build_bundle(config: Config) -> dict:
                 candidates,
                 directory_snapshots,
                 captured,
-                ignored_path=published,
+                ignored_path=published.resolve(strict=True),
             )
             cleanup_owned_staging_tree(stage_binding, staged_binding)
             stage_cleaned = True
@@ -1958,7 +1981,7 @@ def build_bundle(config: Config) -> dict:
                 candidates,
                 directory_snapshots,
                 captured,
-                ignored_path=temporary,
+                ignored_path=temporary.resolve(strict=True),
             ),
             after_commit=finalize_before_success,
         )

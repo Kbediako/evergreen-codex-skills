@@ -28,7 +28,7 @@ Use Web Search only when current external facts materially affect the review. Ve
 
 Prefer the current Browser-supported ChatGPT upload path. Before sending, verify a visible attachment or file reference identifies the intended bundle.
 
-If direct upload is unavailable, use another method explicitly supported by the live Browser documentation. Pasting `CONSULT_PACKET.md` is acceptable when all required text fits; transmit required binary assets separately through a supported path.
+If direct upload is unavailable, another explicitly supported text path must transmit the exact `AUTHORITATIVE_PROMPT.md` and every required text evidence member with clear file boundaries, plus the wrapper and manifest. `CONSULT_PACKET.md` lists members and hashes; pasting it alone never supplies the prompt or evidence. Use this path only when the complete required text fits and its fidelity can be verified; transmit required binary assets separately through a supported path.
 
 If required context cannot be transmitted, stop or narrow the review explicitly. Do not send a context-deficient request and later treat its answer as closure evidence.
 
@@ -69,7 +69,7 @@ Extended reasoning can remain quiet or visibly in progress for a long time. Pref
 
 Treat status text, an acknowledgement, a promise to review, a partial generation, or a response lacking the requested verdict as nonterminal. Continue waiting, or request only the missing deliverable after generation is clearly complete.
 
-A substantive result must contain review content that addresses the supplied task and enough of its requested structure to classify findings. Capture the final visible response faithfully and record whether its verdict is explicit.
+A substantive result must contain review content that addresses the supplied task and enough of its requested structure to classify findings. Capture the final visible response faithfully and record whether its verdict is explicit. After preserving the response and durable conversation URL, close consultation-owned tabs no longer needed; preserve unrelated tabs and unsent user drafts. Record observed cleanup or its blocker without inferring that an inaccessible tab closed.
 
 If the conversation becomes inaccessible, generation is interrupted, the account cannot use the required reasoning mode, or Pro remains unavailable, mark the consultation `BLOCKED`. Do not substitute an unobserved assumption that the review would have passed.
 

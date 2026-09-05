@@ -45,7 +45,7 @@ Record exact commands or checks, outcomes, affected files, and unresolved uncert
 
 ## Apply advice within authority
 
-Make only changes already authorized by the task. If a recommendation materially expands scope, changes external state, or needs a user decision, pause that item and request direction.
+Make changes already authorized by the task, including authorized external actions. If a recommendation needs new authority or an unresolved user decision, pause that item and request direction while continuing independent authorized work.
 
 After changes, run proportionate validation and update every affected finding. Inspect the resulting diff or decision record before asking for re-review.
 
@@ -56,7 +56,7 @@ Classify every new post-change finding at the missing-rule and representation or
 1. Assign one accountable matrix owner and list every implementation surface. State the governing invariant and make one bounded matrix: `finite scope and exclusions | equivalence class | representative | expected invariant | local check | result`. Cover affected operations, representations, lifecycle boundaries, platforms, and negative boundaries. Merge cases only when the same mechanism justifies them; otherwise split them.
 2. Resolve or disposition every class and every transitively affected surface.
 3. Give a fresh-context local Astra high-reasoning reviewer the matrix and candidate and ask it to find an unrepresented same-family counterexample. This is a local falsification step, not a Pro review. Any successful counterexample reopens the matrix.
-4. Freeze the exact validated source and test bytes and hashes. Rerun validation and regenerate only derived results, counts, summaries, manifests, hashes, and the packet from that candidate; then independently verify the packet against the frozen sources. Any frozen-byte change invalidates the derived evidence and reopens the matrix.
+4. Freeze the exact validated source and test bytes and hashes. Retain validation results only when their source, test, command, dependency and relevant environment identities still match; run missing or invalidated checks. Regenerate the current derived counts, summaries, manifests, hashes, and packet, then independently verify the packet against the frozen sources. Any frozen-byte change reopens the matrix and invalidates affected validation and derived evidence.
 5. Send one brand-new full-scope Pro conversation the original contract, complete current scope, matrix, dispositions, frozen identities, and regenerated evidence. Ask for unresolved material findings across the whole scope, not confirmation of the latest fix.
 
 This trigger does not add ceremony to a demonstrated isolated finding and does not replace per-finding dispositions or the closure gate.
@@ -103,4 +103,4 @@ An evidence-backed repeat, superseded point, or explicit out-of-scope suggestion
 
 Do not close because tests pass, changes were made, a time or round budget elapsed, Pro was quiet, or the user-facing result looks good. Those facts may support dispositions but cannot replace the latest substantive verdict.
 
-At closure, report the final verdict, dispositions, local validation, changed files or decisions, remaining nonmaterial or out-of-scope notes, bundle identity, conversation URL, and observed reasoning mode.
+At closure, report the final verdict, dispositions, local validation, changed files or decisions, remaining nonmaterial or out-of-scope notes, bundle identity, conversation URL, and observed reasoning mode. Then continue any unfinished work already authorized by the user's end-to-end objective; review closure alone does not complete that objective.

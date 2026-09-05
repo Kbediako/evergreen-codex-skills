@@ -39,6 +39,7 @@ class ContextBundleTests(unittest.TestCase):
         *arguments: str,
         prompt: bool = True,
         title: str = "Lean evidence review",
+        env: dict[str, str] | None = None,
     ) -> tuple[subprocess.CompletedProcess[str], dict]:
         command = [
             sys.executable,
@@ -58,6 +59,7 @@ class ContextBundleTests(unittest.TestCase):
             encoding="utf-8",
             capture_output=True,
             check=False,
+            env=env,
         )
         return result, json.loads(result.stdout)
 
@@ -723,6 +725,120 @@ class ContextBundleTests(unittest.TestCase):
             self.assertEqual(rejected.returncode, 1)
             self.assertEqual(payload["error"], "directory-reparse-point")
 
+    def check_deduplicated_endpoint_bindings(self, *, native_symlink: bool) -> None:
+        """Exercise alias identity separately from content deduplication and byte limits."""
+        for kind in ("evidence", "prompt"):
+            for partial in (False, True):
+                for boundary in ("stable", "collection", "capture", "precommit", "postcommit", "prompt-drift"):
+                    if boundary == "prompt-drift" and kind != "prompt":
+                        continue
+                    with self.subTest(kind=kind, partial=partial, boundary=boundary), tempfile.TemporaryDirectory() as temp:
+                        root = Path(temp).resolve()
+                        first = root / "a.txt"
+                        second = root / "b.txt"
+                        first.write_bytes(b"FIRST!")
+                        second.write_bytes(b"SECOND")
+                        alias = root / "nested" / "alias.txt"
+                        alias.parent.mkdir()
+                        target = first
+                        if native_symlink:
+                            alias.symlink_to(first)
+                        else:
+                            # Model only alias resolution; endpoint identity uses real files.
+                            alias.write_bytes(b"ALIAS")
+                        real_resolve = Path.resolve
+                        real_collect = BUILDER.collect_candidates
+                        real_write = BUILDER.write_deterministic_zip
+                        real_publish = BUILDER.publish_atomic
+                        mutated = False
+                        out = root / "bundle.zip"
+
+                        def resolve(path, *args, **kwargs):
+                            if path == alias:
+                                return target
+                            return real_resolve(path, *args, **kwargs)
+
+                        def mutate():
+                            nonlocal target, mutated
+                            self.assertFalse(mutated)
+                            if boundary == "prompt-drift":
+                                first.write_bytes(b"CHANGED")
+                            elif native_symlink:
+                                alias.unlink()
+                                alias.symlink_to(second)
+                            else:
+                                alias.write_bytes(b"RETARGETED")
+                                target = second
+                            mutated = True
+
+                        def collect(*args, **kwargs):
+                            result = real_collect(*args, **kwargs)
+                            if boundary == "collection":
+                                mutate()
+                            return result
+
+                        def write(*args, **kwargs):
+                            if boundary in ("capture", "prompt-drift"):
+                                mutate()
+                            return real_write(*args, **kwargs)
+
+                        def publish(data, destination, *, before_commit=None, after_commit=None):
+                            def before(path):
+                                if boundary == "precommit":
+                                    mutate()
+                                before_commit(path)
+
+                            def after(path):
+                                if boundary == "postcommit":
+                                    mutate()
+                                after_commit(path)
+
+                            return real_publish(data, destination, before_commit=before, after_commit=after)
+
+                        args = ["--root", str(root), "--title", "Deduplicated endpoints", "--out", str(out)]
+                        if kind == "prompt":
+                            args += ["--prompt-file", str(first), "--max-files", "1"]
+                        else:
+                            args += ["--question", "Review.", "--include", str(first), "--max-files", "2"]
+                        args += ["--include", str(alias), "--max-file-bytes", "16", "--max-total-bytes", "16"]
+                        if partial:
+                            args.append("--allow-partial")
+                        with contextlib.ExitStack() as stack:
+                            if not native_symlink:
+                                stack.enter_context(mock.patch.object(Path, "resolve", new=resolve))
+                            stack.enter_context(mock.patch.object(BUILDER, "collect_candidates", side_effect=collect))
+                            stack.enter_context(mock.patch.object(BUILDER, "write_deterministic_zip", side_effect=write))
+                            stack.enter_context(mock.patch.object(BUILDER, "publish_atomic", side_effect=publish))
+                            if boundary == "stable":
+                                result = BUILDER.run(args)
+                                self.assertEqual(result["status"], "complete")
+                                self.assertEqual(result["file_count"], 0 if kind == "prompt" else 1)
+                                manifest, _, members = self.read_zip(out)
+                                reason = "authoritative-prompt-deduplicated" if kind == "prompt" else "duplicate-selection"
+                                self.assertTrue(any(item["reason"] == reason for item in manifest["omissions"]))
+                                self.assertEqual(members["AUTHORITATIVE_PROMPT.md"] if kind == "prompt" else members["files/a.txt"], b"FIRST!")
+                            else:
+                                with self.assertRaises(BUILDER.BundleError) as raised:
+                                    BUILDER.run(args)
+                                self.assertTrue(mutated)
+                                expected = "prompt-changed" if boundary == "prompt-drift" else "evidence-changed"
+                                self.assertEqual(raised.exception.code, expected)
+                                self.assertFalse(out.exists())
+                                self.assertEqual(list(root.glob(f".{out.name}.*.tmp")), [])
+
+    def test_deduplicated_endpoint_bindings_with_controlled_alias_resolution(self) -> None:
+        self.check_deduplicated_endpoint_bindings(native_symlink=False)
+
+    def test_deduplicated_endpoint_bindings_with_native_file_symlinks(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            target = Path(temp) / "target"
+            target.write_bytes(b"TARGET")
+            try:
+                (Path(temp) / "alias").symlink_to(target)
+            except OSError as error:
+                self.skipTest(f"File symlinks unavailable: {error}")
+        self.check_deduplicated_endpoint_bindings(native_symlink=True)
+
     def test_nonterminal_directory_redirect_is_not_traversed(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -1182,6 +1298,124 @@ class ContextBundleTests(unittest.TestCase):
                 self.assertEqual(raised.exception.code, "invalid-output")
                 self.assertEqual(list(real_parent.iterdir()), [])
 
+    def test_temporary_layouts_do_not_create_false_source_drift(self) -> None:
+        for layout in ("outside", "root", "child"):
+            for selection in ("prompt-only", "exact", "directory", "whole-repo"):
+                for output_mode in ("default", "explicit"):
+                    for spelling in ("canonical", "alias"):
+                        with self.subTest(layout=layout, selection=selection, output=output_mode, spelling=spelling), tempfile.TemporaryDirectory() as temp:
+                            base = Path(temp).resolve()
+                            root = base / "source"
+                            root.mkdir()
+                            (root / "evidence.txt").write_bytes(b"EVIDENCE")
+                            temp_parent = base / "temporary" if layout == "outside" else root if layout == "root" else root / "temporary"
+                            temp_parent.mkdir(exist_ok=True)
+                            alias = base / "alias"
+                            chosen_temp = temp_parent
+                            if spelling == "alias":
+                                if os.name == "nt":
+                                    import _winapi
+
+                                    _winapi.CreateJunction(str(temp_parent.parent), str(alias))
+                                else:
+                                    alias.symlink_to(temp_parent.parent, target_is_directory=True)
+                                chosen_temp = alias / temp_parent.name
+                            try:
+                                args = []
+                                if selection == "exact":
+                                    args += ["--include", "evidence.txt"]
+                                elif selection == "directory":
+                                    args += ["--include", "."]
+                                elif selection == "whole-repo":
+                                    args += ["--whole-repo"]
+                                if output_mode == "explicit":
+                                    output_parent = base / "output"
+                                    output_parent.mkdir()
+                                    args += ["--out", str(output_parent / "bundle.zip")]
+                                environment = dict(os.environ, TMPDIR=str(chosen_temp), TEMP=str(chosen_temp), TMP=str(chosen_temp))
+                                result, payload = self.run_cli(root, *args, env=environment)
+                                self.assertEqual(result.returncode, 0, payload)
+                                artifact = Path(payload["artifact"])
+                                self.assertEqual(payload["artifact_sha256"], hashlib.sha256(artifact.read_bytes()).hexdigest())
+                                manifest, _, members = self.read_zip(artifact)
+                                expected = [] if selection == "prompt-only" else ["files/evidence.txt"]
+                                self.assertEqual([item["bundle_path"] for item in manifest["files"]], expected)
+                                if expected:
+                                    self.assertEqual(members[expected[0]], b"EVIDENCE")
+                                self.assertEqual((root / "evidence.txt").read_bytes(), b"EVIDENCE")
+                                self.assertEqual(list(temp_parent.glob("codex-consult-build-*")), [])
+                                self.assertEqual(list(artifact.parent.glob(f".{artifact.name}.*.tmp")), [])
+                            finally:
+                                if spelling == "alias":
+                                    if os.name == "nt":
+                                        alias.rmdir()
+                                    else:
+                                        alias.unlink()
+
+    def test_default_name_selection_does_not_write_to_the_temporary_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            parent = Path(temp)
+            before = parent.stat()
+            with mock.patch.object(BUILDER.tempfile, "gettempdir", return_value=str(parent)), mock.patch.object(
+                BUILDER.os, "open", side_effect=AssertionError("Name selection must not create a reservation.")
+            ):
+                first = BUILDER.default_destination(mock.Mock(title="Name only"), "a" * 64)
+                second = BUILDER.default_destination(mock.Mock(title="Name only"), "a" * 64)
+            self.assertNotEqual(first, second)
+            self.assertEqual(first.parent, parent)
+            self.assertEqual(list(parent.iterdir()), [])
+            self.assertEqual(parent.stat().st_mtime_ns, before.st_mtime_ns)
+
+    def test_overlapping_temp_exceptions_preserve_real_drift_and_ownership_checks(self) -> None:
+        for layout in ("root", "child"):
+            for selection in ("exact", "directory", "whole-repo"):
+                for mutation in ("content", "inventory", "staging-owner"):
+                    if selection == "exact" and mutation == "inventory":
+                        continue
+                    with self.subTest(layout=layout, selection=selection, mutation=mutation), tempfile.TemporaryDirectory() as temp:
+                        base = Path(temp).resolve()
+                        root = base / "source"
+                        root.mkdir()
+                        evidence = root / "evidence.txt"
+                        evidence.write_bytes(b"BEFORE")
+                        temp_parent = root if layout == "root" else root / "temporary"
+                        temp_parent.mkdir(exist_ok=True)
+                        out = base / "bundle.zip"
+                        real_validate = BUILDER.validate_source_snapshot
+                        changed = False
+                        foreign_stage = None
+
+                        def mutate_before_validation(config, *args, ignored_path=None, **kwargs):
+                            nonlocal changed, foreign_stage
+                            if ignored_path is not None and not changed:
+                                if mutation == "content":
+                                    evidence.write_bytes(b"AFTER!")
+                                elif mutation == "inventory":
+                                    (root / "unexpected.txt").write_bytes(b"UNEXPECTED")
+                                else:
+                                    foreign_stage = config.staging_directory.path
+                                    foreign_stage.rename(base / "displaced-stage")
+                                    foreign_stage.mkdir()
+                                    (foreign_stage / "foreign.txt").write_bytes(b"FOREIGN")
+                                changed = True
+                            return real_validate(config, *args, ignored_path=ignored_path, **kwargs)
+
+                        args = ["--root", str(root), "--title", "Overlap drift", "--question", "Review.", "--out", str(out)]
+                        args += ["--include", "evidence.txt"] if selection == "exact" else ["--include", "."] if selection == "directory" else ["--whole-repo"]
+                        with mock.patch.object(BUILDER.tempfile, "gettempdir", return_value=str(temp_parent)), mock.patch.object(
+                            BUILDER, "validate_source_snapshot", side_effect=mutate_before_validation
+                        ):
+                            with self.assertRaises(BUILDER.BundleError) as raised:
+                                BUILDER.run(args)
+                        self.assertTrue(changed)
+                        self.assertEqual(raised.exception.code, "artifact-changed" if mutation == "staging-owner" else "evidence-changed")
+                        self.assertFalse(out.exists())
+                        self.assertEqual(list(base.glob(f".{out.name}.*.tmp")), [])
+                        if foreign_stage is not None:
+                            self.assertEqual((foreign_stage / "foreign.txt").read_bytes(), b"FOREIGN")
+                        else:
+                            self.assertEqual(list(temp_parent.glob("codex-consult-build-*")), [])
+
     def test_output_collision_is_refused_without_modifying_existing_bytes(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -1377,6 +1611,7 @@ class ContextBundleTests(unittest.TestCase):
                 real_verify = BUILDER.verify_published_artifact
                 real_validate = BUILDER.validate_source_snapshot
                 real_cleanup = BUILDER.cleanup_owned_staging_tree
+                source_check_mutated = False
                 publisher = "rename" if BUILDER.os.name == "nt" else "link"
                 real_publish = getattr(BUILDER.os, publisher)
 
@@ -1414,6 +1649,7 @@ class ContextBundleTests(unittest.TestCase):
                     ignored_path=None,
                     **kwargs,
                 ):
+                    nonlocal source_check_mutated
                     real_validate(
                         *args,
                         ignored_path=ignored_path,
@@ -1422,9 +1658,12 @@ class ContextBundleTests(unittest.TestCase):
                     if (
                         case
                         == "destination-mutation-during-final-source-check"
-                        and ignored_path == out
+                        and ignored_path is not None
+                        and ignored_path.resolve() == out.resolve()
                     ):
+                        self.assertFalse(source_check_mutated)
                         out.write_bytes(b"MUTATED-DURING-SOURCE-CHECK")
+                        source_check_mutated = True
 
                 def cleanup_then_mutate_destination(*args, **kwargs):
                     real_cleanup(*args, **kwargs)
@@ -1544,11 +1783,34 @@ class ContextBundleTests(unittest.TestCase):
                     self.assertFalse(out.exists())
                     self.assertFalse(stage.exists())
                 elif case.startswith("destination-mutation-during-"):
+                    if case == "destination-mutation-during-final-source-check":
+                        self.assertTrue(source_check_mutated)
                     self.assertFalse(out.exists())
                     self.assertFalse(stage.exists())
                 else:
                     self.assertEqual(out.read_bytes(), b"FOREIGN-DESTINATION")
                     self.assertFalse(stage.exists())
+
+    def test_build_transaction_controls_under_aliased_temp_ancestor(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp).resolve()
+            real = base / "real"
+            (real / "temporary").mkdir(parents=True)
+            alias = base / "alias"
+            if os.name == "nt":
+                import _winapi
+
+                _winapi.CreateJunction(str(real), str(alias))
+            else:
+                alias.symlink_to(real, target_is_directory=True)
+            try:
+                with mock.patch.object(BUILDER.tempfile, "gettempdir", return_value=str(alias / "temporary")):
+                    self.test_build_transaction_freezes_artifact_sources_and_owned_cleanup()
+            finally:
+                if os.name == "nt":
+                    alias.rmdir()
+                else:
+                    alias.unlink()
 
     def test_preexisting_output_parents_inside_selected_trees_are_authorized(self) -> None:
         for selection in ("explicit", "whole-repo"):
@@ -1579,6 +1841,71 @@ class ContextBundleTests(unittest.TestCase):
                 )
                 self.assertEqual(members["files/selected/evidence.txt"], b"EVIDENCE")
                 self.assertNotIn("files/selected/new-output/nested/bundle.zip", members)
+
+    def test_linked_ancestor_output_and_temp_paths_publish_exact_bytes(self) -> None:
+        for selection in (
+            "prompt-only", "exact", "directory", "whole-repo", "default-temp",
+            "exact-root", "directory-root", "whole-repo-root",
+        ):
+            with self.subTest(selection=selection), tempfile.TemporaryDirectory() as temp:
+                base = Path(temp).resolve()
+                real = base / "real"
+                root = real / "source"
+                output = root / "output"
+                output.mkdir(parents=True)
+                (root / "evidence.txt").write_bytes(b"EVIDENCE")
+                temp_parent = real / "temporary"
+                temp_parent.mkdir()
+                alias = base / "alias"
+                if os.name == "nt":
+                    import _winapi
+
+                    _winapi.CreateJunction(str(real), str(alias))
+                else:
+                    alias.symlink_to(real, target_is_directory=True)
+                try:
+                    out = alias / "source" / "output" / "bundle.zip"
+                    if selection.endswith("-root"):
+                        out = alias / "source" / "bundle.zip"
+                    arguments = ["--root", str(root), "--title", "Linked output", "--question", "Review."]
+                    if selection in ("exact", "exact-root", "default-temp"):
+                        arguments += ["--include", "evidence.txt"]
+                    elif selection in ("directory", "directory-root"):
+                        arguments += ["--include", str(root)]
+                    elif selection in ("whole-repo", "whole-repo-root"):
+                        arguments += ["--whole-repo"]
+                    if selection != "default-temp":
+                        arguments += ["--out", str(out)]
+                    with mock.patch.object(BUILDER.tempfile, "gettempdir", return_value=str(alias / "temporary")):
+                        result = BUILDER.run(arguments)
+                    artifact = Path(result["artifact"])
+                    self.assertEqual(result["status"], "complete")
+                    self.assertEqual(result["artifact_sha256"], hashlib.sha256(artifact.read_bytes()).hexdigest())
+                    manifest, _, members = self.read_zip(artifact)
+                    self.assertEqual(members["AUTHORITATIVE_PROMPT.md"], b"Review.")
+                    expected = [] if selection == "prompt-only" else ["files/evidence.txt"]
+                    self.assertEqual([item["bundle_path"] for item in manifest["files"]], expected)
+                    if expected:
+                        self.assertEqual(members[expected[0]], b"EVIDENCE")
+                    expected_entries = ["bundle.zip", "evidence.txt", "output"] if selection.endswith("-root") else [artifact.name]
+                    self.assertEqual(sorted(path.name for path in artifact.parent.iterdir()), expected_entries)
+                    if selection != "default-temp":
+                        self.assertEqual(list(temp_parent.iterdir()), [])
+                    else:
+                        self.assertEqual(artifact.parent, alias / "temporary")
+                    original = artifact.read_bytes()
+                    with self.assertRaises(BUILDER.BundleError) as raised:
+                        BUILDER.publish_atomic(b"REPLACEMENT", artifact)
+                    self.assertEqual(raised.exception.code, "output-collision")
+                    self.assertEqual(artifact.read_bytes(), original)
+                    with self.assertRaises(BUILDER.BundleError) as raised:
+                        BUILDER.publish_atomic(b"ZIP", alias / "forbidden.zip")
+                    self.assertEqual(raised.exception.code, "invalid-output")
+                finally:
+                    if os.name == "nt":
+                        alias.rmdir()
+                    else:
+                        alias.unlink()
 
     def test_explicit_output_parent_must_preexist_as_a_real_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -2398,6 +2725,14 @@ class ContextBundleTests(unittest.TestCase):
                 def fsync_then_mutate(descriptor: int) -> None:
                     nonlocal mutated
                     real_fsync(descriptor)
+                    publication_temps = list(out.parent.glob(f".{out.name}.*.tmp"))
+                    if not publication_temps:
+                        return
+                    self.assertEqual(len(publication_temps), 1)
+                    self.assertEqual(
+                        BUILDER.endpoint_owner_identity(os.fstat(descriptor)),
+                        BUILDER.endpoint_owner_identity(publication_temps[0].lstat()),
+                    )
                     self.assertFalse(mutated)
                     evidence.write_bytes(b"AFTER!")
                     (selected / "late.txt").write_bytes(b"LATE")
@@ -2414,7 +2749,11 @@ class ContextBundleTests(unittest.TestCase):
                     BUILDER.os,
                     "fsync",
                     side_effect=fsync_then_mutate,
-                ):
+                ), mock.patch.object(
+                    BUILDER.os,
+                    "rename" if os.name == "nt" else "link",
+                    wraps=BUILDER.os.rename if os.name == "nt" else BUILDER.os.link,
+                ) as commit:
                     with self.assertRaises(BUILDER.BundleError) as raised:
                         BUILDER.run(
                             [
@@ -2430,6 +2769,7 @@ class ContextBundleTests(unittest.TestCase):
                             ]
                         )
                 self.assertTrue(mutated)
+                commit.assert_not_called()
                 self.assertEqual(raised.exception.code, "evidence-changed")
                 self.assertFalse(out.exists())
                 self.assertEqual(list(root.glob(f".{out.name}.*.tmp")), [])
@@ -2449,6 +2789,14 @@ class ContextBundleTests(unittest.TestCase):
             def fsync_then_mutate(descriptor: int) -> None:
                 nonlocal mutated
                 real_fsync(descriptor)
+                publication_temps = list(out.parent.glob(f".{out.name}.*.tmp"))
+                if not publication_temps:
+                    return
+                self.assertEqual(len(publication_temps), 1)
+                self.assertEqual(
+                    BUILDER.endpoint_owner_identity(os.fstat(descriptor)),
+                    BUILDER.endpoint_owner_identity(publication_temps[0].lstat()),
+                )
                 self.assertFalse(mutated)
                 prompt.write_bytes(b"AFTER!")
                 mutated = True
@@ -2457,7 +2805,11 @@ class ContextBundleTests(unittest.TestCase):
                 BUILDER.os,
                 "fsync",
                 side_effect=fsync_then_mutate,
-            ):
+            ), mock.patch.object(
+                BUILDER.os,
+                "rename" if os.name == "nt" else "link",
+                wraps=BUILDER.os.rename if os.name == "nt" else BUILDER.os.link,
+            ) as commit:
                 with self.assertRaises(BUILDER.BundleError) as raised:
                     BUILDER.run(
                         [
@@ -2474,6 +2826,7 @@ class ContextBundleTests(unittest.TestCase):
                         ]
                     )
             self.assertTrue(mutated)
+            commit.assert_not_called()
             self.assertEqual(raised.exception.code, "prompt-changed")
             self.assertFalse(out.exists())
             self.assertEqual(list(selected.glob(f".{out.name}.*.tmp")), [])
