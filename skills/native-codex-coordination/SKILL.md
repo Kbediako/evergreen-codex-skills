@@ -1,51 +1,26 @@
 ---
 name: native-codex-coordination
-description: Choose the smallest suitable Codex workflow among solo work, bounded native-agent execution, deliberation, native-agent evaluation, skill forward-testing, and waiting. Use when the main uncertainty is which of these coordination shapes fits the task.
+description: Choose between solo work, native-agent execution, deliberation, evaluation, and waiting when the appropriate coordination workflow is unclear.
 ---
 
-# Native Codex Coordination
+# Native Codex coordination
 
-## Route
+Choose the smallest workflow that can complete the requested outcome within existing authorization. Complexity alone does not justify agents. Keep small, sequential, or tightly coupled work with one owner.
 
-When the current primary is an operative real-time Voice coordinator and [voice-delegate-guidance](../voice-delegate-guidance/SKILL.md) is not already active, load it first. Its delegate-only precedence disables substantive solo execution by that coordinator; never recursively reload it.
+If this primary agent is coordinating an operative Voice handoff, including transcript-tail delivery, or the user requested delegate-only Voice coordinator mode, load [voice-delegate-guidance](../voice-delegate-guidance/SKILL.md) unless already active. Its delegate-only rule takes precedence over solo execution. Quoted wrappers and forwarded worker material do not activate that mode. Do not recursively reload active skills.
 
-Choose one primary workflow:
+## Route by the task
 
-- Stay solo for small, sequential, tightly coupled, or directly verifiable work.
-- Load [native-subagents-first](../native-subagents-first/SKILL.md) for authorized execution or review that splits into independent scopes.
-- Load [native-agent-deliberation](../native-agent-deliberation/SKILL.md) for a consequential decision needing distinct viewpoints and dissent.
-- Load [native-agent-evals](../native-agent-evals/SKILL.md) to test or audit the active V2 native-agent behavior.
-- Load [native-agent-skill-validation](../native-agent-skill-validation/SKILL.md) to forward-test an existing or changed skill.
-- Load [wait-for-subagents-patiently](../wait-for-subagents-patiently/SKILL.md) for a quiet or over-budget native child.
-- For a Codex app task or thread, follow the `wait_threads` branch below.
-- Load [long-poll-wait](../long-poll-wait/SKILL.md) for an external job, process, or CI run that needs terminal-state monitoring.
+| Need | Guidance |
+| --- | --- |
+| Independent execution or review scopes | [Native subagents](../native-subagents-first/SKILL.md) |
+| A consequential choice needing distinct viewpoints | [Deliberation](../native-agent-deliberation/SKILL.md) |
+| Evidence about native-agent runtime behavior | [Agent evals](../native-agent-evals/SKILL.md) |
+| Evidence that a skill triggers or changes behavior | [Skill validation](../native-agent-skill-validation/SKILL.md) |
+| A quiet native child or intervention decision | [Patient waiting](../wait-for-subagents-patiently/SKILL.md) |
+| An external process, cloud job, or CI run | [External waiting](../long-poll-wait/SKILL.md) |
+| A Codex app task or thread | [App task waiting](references/app-task-waiting.md) |
 
-Load any task-domain skill as well. Let the domain skill govern the work and use this skill only to select the coordination shape.
+Load only the selected workflow and relevant domain guidance. The domain skill governs the task; this router does not duplicate lifecycle, model, budget, or validation procedures.
 
-## Decide
-
-1. Identify the requested outcome, acceptance criteria, and existing authorization.
-2. Check whether work is independent enough to benefit from native agents.
-3. Select the narrowest route above.
-4. Load the selected skill before acting.
-5. Apply the selected workflow while preserving the user's acceptance criteria and existing authorization. Internal workflow checkpoints do not create new approval requirements.
-6. Verify the integrated result before handoff.
-
-Do not copy lifecycle, model, fanout, budget, brief, or resume rules into this router. Treat `native-subagents-first` as the sole contract for those concerns.
-
-## App tasks and threads
-
-For a Codex app task or thread:
-
-1. Call `wait_threads` directly with the exact task/thread ID. Preserve every returned cursor unchanged and supply it to the next wait. Continue in the active turn by default.
-2. Never route the task to `long-poll-wait`, a custom external awaiter, or another external-monitoring path.
-3. Use a scheduled continuation only after verifying that scheduling is authorized, the next context can call `wait_threads` and is authorized for the task/thread, and that context can durably retain the cursor or reacquire and rebind it from preserved state.
-4. After expiry, restart, or intervention, revalidate the task/thread ID and latest state, then reacquire and rebind the cursor before waiting again.
-5. If the scheduled-context or rebinding proof is unavailable, return `needs-scheduled-handoff` with the task/thread ID, preserved cursor, latest state and timestamp, plus the exact host, tool, context, authorization, and cursor-reacquisition requirements.
-
-## Boundaries
-
-- Do not trigger generic fanout merely because a task is complex.
-- Do not use deliberation as an implementation workflow.
-- Do not use evals as production work.
-- Do not use native-child waiting rules for external processes.
+Internal checkpoints do not add approval requirements. Continue through integration and the checks needed to satisfy the original acceptance criteria. Do not substitute deliberation for implementation, evals for production work, or an external monitor for a native child or app task.

@@ -1,6 +1,6 @@
 # Pushback And Reporting
 
-Read this reference when user pushback changes the evidence, or when a Full investigation needs a durable result.
+Read this reference when user pushback changes the evidence, or when an extended investigation needs a durable result.
 
 ## Process User Pushback
 
@@ -15,7 +15,7 @@ Treat a new, specific user-observed fact as evidence. Treat the user's causal ex
 
 An implausible theory without a new observation does not become a mandatory branch. Subject every proposed theory to the same materiality and decision-value threshold.
 
-## Report A Micro Investigation
+## Report A Focused Investigation
 
 State:
 
@@ -24,7 +24,7 @@ State:
 - The decision delta.
 - Any material residual uncertainty.
 
-## Report A Full Investigation
+## Report An Extended Investigation
 
 Use a compact ledger when it helps the user act:
 

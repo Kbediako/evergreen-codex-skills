@@ -26,7 +26,11 @@ npx skills add Kbediako/evergreen-codex-skills -g -a codex -s consult-chatgpt-pr
 ```
 
 Individual skills can be installed and used independently when their own
-declared dependencies are satisfied. For example, `consult-chatgpt-pro` works
-standalone for ordinary consultations and uses `native-agent-evals` only when
-supplying rollout-derived evidence. `native-agent-skill-validation`
+declared dependencies are satisfied. For example, `consult-chatgpt-pro` uses the host's Browser workflow for ordinary consultations, `native-agent-evals` for rollout-derived evidence, and `native-subagents-first` when its recurring-findings branch requires a local reviewer. `long-poll-wait` needs the native contract only when it delegates to a native observer. `native-agent-skill-validation`
 additionally expects Codex's runtime-provided `skill-creator` skill.
+
+## Maintaining these skills
+
+Open the entrypoint for the task being performed, then load references only when their branch applies. The catalogue does not require reading every skill before an edit. Descriptions identify the task each skill serves. Keep each `SKILL.md` at 200 lines or fewer. Entrypoints keep the shared decisions and constraints; references hold conditional procedures. Keep useful ownership, authorization, evidence, and completion rules, and remove repeated instructions or fixed itineraries that do not improve the outcome. Do not turn internal checkpoints into new permission requests for already-authorized work.
+
+This follows [OpenAI's guidance on skills and prompts](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra). The native-agent suite retains its Astra worker defaults; those are suite choices, not requirements for every Codex skill. Documentation checks establish package integrity, not measured behavioral improvement. Use controlled trials when making claims about a skill's effect.

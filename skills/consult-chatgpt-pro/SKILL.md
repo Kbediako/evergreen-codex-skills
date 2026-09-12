@@ -1,58 +1,28 @@
 ---
 name: consult-chatgpt-pro
-description: Consult ChatGPT Pro or another ChatGPT extended-reasoning mode with a faithful task-relevant context packet, reconcile its advice against local evidence, and run focused follow-ups to closure. Use when the user explicitly asks for ChatGPT Pro, GPT Pro, or extended reasoning, or when a second opinion would materially improve a high-risk plan or architecture choice, difficult or repeated troubleshooting, post-implementation or code/work review, visual review, or synthesis of conflicting analyses. Skip implicit consultation for trivial tasks and questions already decided by authoritative local evidence.
+description: Consult ChatGPT Pro when requested or when an unresolved, consequential question needs an external reasoning review. Reconcile its advice with local evidence.
 ---
 
 # Consult ChatGPT Pro
 
-## Operating contract
+Use Pro as a consultant. Codex owns the decision, implementation, local validation, and completion of the user's task. Pro can assess only the material supplied in its current conversation; do not imply it inspected omitted files or ran local checks.
 
-Use ChatGPT Pro as a reasoning consultant. Codex remains responsible for gathering local evidence, making decisions, implementing authorized changes, validating them, and reporting the final judgment.
+## Prepare and consult
 
-Assume Pro can see only what is sent in the current conversation. Never imply that it inspected the local machine, repository, terminal, browser, tests, or omitted files.
+Define the question, scope, success criteria, available evidence, and requested verdict. Keep optional suggestions outside the task unless the user expands it.
 
-Keep the consultation inside the user's task and success criteria. Treat suggestions outside that boundary as out of scope unless the user expands it.
+- Read [context packets](references/context-packets.md) when selecting evidence or building and verifying the ZIP. Include only authorized task evidence. For rollout-derived evidence, use the typed exporter in `native-agent-evals`; never attach a source rollout or conversation export.
+- Read [ChatGPT browser execution](references/chatgpt-browser.md) before selecting a browser or mode, transmitting evidence, waiting, or collecting a response. Verify Pro when the user requires it, and use a fresh conversation for each substantive review.
+- Read [reconciliation and closure](references/closure-loop.md) when acting on advice, preparing re-review, or deciding closure. It owns finding dispositions and recurring-failure review. Isolated findings permit focused re-review; an activated recurring-failure gate requires full-scope re-review.
 
-## Context boundary
+Send the smallest complete verified packet. Wait for a substantive response without forcing an early answer. If required evidence cannot be supplied, narrow the verdict explicitly or report the consultation as `BLOCKED`.
 
-Include only task-relevant evidence the user has authorized and preserve it faithfully.
+## Reconcile and finish
 
-Never attach a source rollout or conversation export. Obtain rollout-derived evidence only through the typed structural exporter in `native-agent-evals`.
+Verify material recommendations locally. Implement changes already authorized by the task, validate the affected result, and return current evidence for re-review while material findings remain. An internal review checkpoint does not require renewed user permission.
 
-If required context is unavailable, narrow the requested verdict explicitly or mark the consultation `BLOCKED`.
+Keep a compact ledger of the ZIP SHA-256, conversation URL, observed mode, included evidence and omissions, findings and dispositions, local validation, and current state. Update it on material changes rather than every wait.
 
-## Required references
+Use `CLOSED` only when the latest substantive Pro verdict covers the declared scope, explicitly leaves no unresolved material finding, and every material finding has an evidence-backed resolved disposition. Missing evidence or an ambiguous verdict remains `BLOCKED`; use `ABANDONED` only when the user ends the consultation. A time limit or passing tests cannot substitute for the verdict.
 
-Read [references/context-packets.md](references/context-packets.md) before building or inspecting a context packet.
-
-Read [references/chatgpt-browser.md](references/chatgpt-browser.md) before opening ChatGPT, selecting a reasoning mode, transmitting context, waiting, or collecting a response.
-
-Read [references/closure-loop.md](references/closure-loop.md) before classifying findings, acting on advice, preparing re-review, or deciding closure.
-
-## Frame the review
-
-Define the mode, one-sentence question, task boundary, success criteria, evidence available, local validation, and requested verdict.
-
-## Keep a compact ledger
-
-Record the exact ZIP SHA-256, conversation URL, observed reasoning mode, included files and material omissions, material findings and dispositions, local validation, changed decisions/files, and current state.
-
-Update it after each send, substantive response, local action, and re-review. Keep it concise enough to survive browser waits without becoming a second packet.
-
-## Run the loop
-
-Use these states as needed:
-
-`FRAMED → EVIDENCE_READY → PACKET_READY → SENT → WAITING → RECONCILING → ACTIONED → RE_REVIEW → CLOSED`
-
-Use `BLOCKED` when required context, authorization, Browser access, a substantive response, or a closure verdict is unavailable. Use `ABANDONED` only when the user ends the consultation.
-
-Build the smallest complete current packet, send its atomic ZIP in a fresh conversation, wait for a substantive result, verify and disposition findings locally, and re-review while material findings remain.
-
-Classify each new post-change finding with the closure reference. When the same missing rule or boundary recurs, or the risk spans separately implemented surfaces, complete its owned equivalence-class matrix, freeze the validated candidate bytes, regenerate derived evidence, and request one brand-new full-scope Pro review. Do not drip-feed equivalent fixes.
-
-## Closure and handoff
-
-Apply the three-condition closure gate in the closure reference; any missing or ambiguous verdict remains `BLOCKED`.
-
-Report the final ledger and closure state.
+Report the outcome and ledger, then complete any remaining authorized task work. Review closure alone does not finish the user's objective.

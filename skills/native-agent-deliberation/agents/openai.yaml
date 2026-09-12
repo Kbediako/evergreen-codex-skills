@@ -1,4 +1,4 @@
 interface:
   display_name: "Native Agent Deliberation"
-  short_description: "Frame decisions with evidence and dissent"
+  short_description: "Compare options with evidence and dissent"
   default_prompt: "Use $native-agent-deliberation to frame this decision with distinct evidence-backed viewpoints."

@@ -33,7 +33,7 @@ Keep `blocked` findings unresolved. Do not turn them into out-of-scope items mer
 
 Test each factual recommendation against the strongest available local evidence. Match validation to the claim:
 
-- Run focused and broader tests for code behavior and regression risk.
+- Run checks appropriate to changed behavior and required project validation. Broaden or repeat them only when changes, failures, or unresolved regression risks justify it.
 - Inspect current files, diffs, schemas, configuration, and dependency contracts for implementation claims.
 - Reproduce errors and falsify competing hypotheses for debugging claims.
 - Observe the live UI for visual or interaction claims.
@@ -51,15 +51,7 @@ After changes, run proportionate validation and update every affected finding. I
 
 ## Close invariant families before re-review
 
-Classify every new post-change finding at the missing-rule and representation or lifecycle-boundary level; an umbrella label alone does not prove recurrence. Activate this gate only when the same rule or boundary recurs, or when the risk spans separately implemented surfaces. Otherwise handle the genuinely new or demonstrated-isolated finding normally. Once activated, stop instance-by-instance re-review and, before the next send:
-
-1. Assign one accountable matrix owner and list every implementation surface. State the governing invariant and make one bounded matrix: `finite scope and exclusions | equivalence class | representative | expected invariant | local check | result`. Cover affected operations, representations, lifecycle boundaries, platforms, and negative boundaries. Merge cases only when the same mechanism justifies them; otherwise split them.
-2. Resolve or disposition every class and every transitively affected surface.
-3. Give a fresh-context local Astra high-reasoning reviewer the matrix and candidate and ask it to find an unrepresented same-family counterexample. This is a local falsification step, not a Pro review. Any successful counterexample reopens the matrix.
-4. Freeze the exact validated source and test bytes and hashes. Retain validation results only when their source, test, command, dependency and relevant environment identities still match; run missing or invalidated checks. Regenerate the current derived counts, summaries, manifests, hashes, and packet, then independently verify the packet against the frozen sources. Any frozen-byte change reopens the matrix and invalidates affected validation and derived evidence.
-5. Send one brand-new full-scope Pro conversation the original contract, complete current scope, matrix, dispositions, frozen identities, and regenerated evidence. Ask for unresolved material findings across the whole scope, not confirmation of the latest fix.
-
-This trigger does not add ceremony to a demonstrated isolated finding and does not replace per-finding dispositions or the closure gate.
+For each new post-change finding, identify the missing rule and affected representation or lifecycle boundary. An umbrella label alone does not prove recurrence. When the same rule or boundary recurs, or the risk spans separately implemented surfaces, read [recurring findings](recurring-findings.md) and complete its bounded coverage, local review, and frozen-evidence procedure before the next send. That branch requires a fresh full-scope Pro review even when the task scope is unchanged. Handle isolated findings with focused re-review.
 
 ## Prepare an independent re-review handoff
 

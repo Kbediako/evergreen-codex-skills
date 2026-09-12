@@ -1,6 +1,6 @@
 # Evidence And Probes
 
-Read this reference for Full investigations, disputed evidence, policy-shaped errors, or boundary isolation.
+Read this reference for extended investigations, disputed evidence, policy-shaped errors, or boundary isolation.
 
 ## Establish Authority And Freshness
 

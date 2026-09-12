@@ -5,7 +5,7 @@ Use this reference for Windows or WSL rollout audits and skill-invocation classi
 ## Select sessions
 
 1. Record the current audit root session ID, descendants, and rollout paths.
-2. Exclude that whole task family so its prompts and loaded skills cannot self-confirm the result.
+2. For retrospective discovery or natural-usage inventories, exclude that whole audit family so its prompts and loaded skills cannot self-confirm usage. For a predeclared probe or controlled study, explicitly selected fresh trial descendants are experimental evidence. Keep coordinator/evaluator activity out of the measured behavior and retain the study's isolation and contamination controls.
 3. Select candidates by timestamp, task ID, cwd, or explicit path.
 4. Include archived or resumed locations only when they belong to the requested scope.
 5. Keep host and runtime metadata separate from behavioral evidence.
@@ -38,14 +38,24 @@ PowerShell inventory:
 
 ```powershell
 $rollout = 'C:\path\to\rollout.jsonl'
+$sourceLine = 0
 Get-Content -LiteralPath $rollout | ForEach-Object {
-  try { $_ | ConvertFrom-Json -Depth 100 } catch {
-    [pscustomobject]@{ parse_error = $_.Exception.Message }
+  $sourceLine += 1
+  try {
+    $outer = $_ | ConvertFrom-Json -Depth 100 -ErrorAction Stop
+  } catch {
+    [pscustomobject]@{
+      source_path = $rollout
+      source_line = $sourceLine
+      parse_error = $_.Exception.Message
+    }
+    return
   }
-} | ForEach-Object {
-  $outer = $_
   $item = $outer.payload
   [pscustomobject]@{
+    source_path = $rollout
+    source_line = $sourceLine
+    parse_error = $null
     timestamp = $outer.timestamp
     record_type = $outer.type
     payload_type = $item.type
@@ -55,7 +65,7 @@ Get-Content -LiteralPath $rollout | ForEach-Object {
     namespace = $item.namespace
     role = $item.role
   }
-} | Format-Table -AutoSize
+}
 ```
 
 WSL inventory:
@@ -65,13 +75,23 @@ python3 - "$ROLLOUT" <<'PY'
 import json, sys
 with open(sys.argv[1], encoding="utf-8") as stream:
     for line_no, line in enumerate(stream, 1):
-        row = json.loads(line)
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError as error:
+            print(json.dumps({"source_path": sys.argv[1],
+                              "source_line": line_no,
+                              "parse_error": str(error)}))
+            continue
         item = row.get("payload") or {}
-        print(line_no, row.get("type"), item.get("type"), item.get("id"),
-              item.get("call_id"), item.get("name"), item.get("namespace"),
-              item.get("role"))
+        print(json.dumps({"source_path": sys.argv[1], "source_line": line_no,
+                          "parse_error": None, "record_type": row.get("type"),
+                          "payload_type": item.get("type"), "item_id": item.get("id"),
+                          "call_id": item.get("call_id"), "name": item.get("name"),
+                          "namespace": item.get("namespace"), "role": item.get("role")}))
 PY
 ```
+
+These examples inventory source rows, including parse failures. They do not validate malformed evidence or relax the strict export and promotion checks.
 
 ## Deduplicate history
 
@@ -81,7 +101,7 @@ Treat resume and compaction as history transport:
 2. Register every nonempty stable `item.id` across the complete scoped call
    graph. One ID must retain one outer/payload kind, call ID, and content
    identity; only exact replays may share it.
-3. Without stable IDs, hash a canonical tuple of record type, timestamp, role, parsed payload type, and normalized content.
+3. Without stable IDs, normalized hashes may group candidate replays. They are lookup aids only and cannot establish replay equivalence or justify deduplication.
 4. Compare replayed turn segments and their governing session envelopes with
    hashes of the literal JSONL record-content bytes, including timestamps and
    excluding only the physical LF framing delimiter; only exact byte replays
@@ -135,93 +155,17 @@ For scheduled continuation, preserve task identity, reacquisition method, requir
 
 ## Control confounds
 
+Apply treatment/control requirements to comparative claims. A retrospective inventory or single runtime probe does not require invented comparison conditions; state the narrower claim and mark inapplicable comparison fields accordingly.
+
 Record model, effort, role, fork mode, tool surface, prompt, permissions, cwd, and artifact state for every run. For revision comparisons, preserve exact prompt/policy hashes, a direct policy diff, neutral run IDs, assignment/order, isolated artifact manifests, complete answers, and blind classifications.
 
 Do not attribute an effect to skill text when a worker or environment condition changed.
 
 ## Export bounded evidence
 
-Never send a source rollout. Use `scripts/export_structural_rollout.py` with a schema-v3 JSON spec. The spec declares:
+Read [structural evidence export](structural-export.md) before preparing a schema-v3 spec, running the exporter, verifying an extract, or sending rollout-derived evidence. It owns selector, source-identity, replay, classification, worker-invariance, and publication requirements. Preserve this distinction: source hashes bind the source bytes; normalized matching does not prove exact replay.
 
-- claim, rubric, classification source/checks, and pass aggregation;
-- study-wide worker expectations, actual cross-run worker invariance, and
-  promotion status;
-- source path and exact SHA-256;
-- neutral run ID and condition;
-- nonempty unique `selected_call_ids`;
-- inclusive line scope and selectors for session metadata, turn context, final answer, and completion.
-
-Minimal shape:
-
-```json
-{
-  "schema_version": 3,
-  "study": {
-    "claim": "The selected answer contains the required evidence.",
-    "rubric": "Pass when REQUIRED is present.",
-    "classification": {
-      "source": "complete_final_answer",
-      "pass_when": "all",
-      "checks": [{"id": "required", "operator": "contains", "value": "REQUIRED"}]
-    },
-    "worker_expectations": {
-      "model": "expected-model",
-      "effort": "expected-effort",
-      "role": "expected-role",
-      "sandbox_policy": {"type": "expected-sandbox"},
-      "approval_policy": "expected-approval",
-      "permission_profile": {"type": "expected-permissions"}
-    },
-    "reporting": {
-      "promotion_candidate": false,
-      "evidence_grade": "declared-grade",
-      "known_limits": ["Declare study-specific limits."]
-    }
-  },
-  "runs": [{
-    "run_id": "neutral-run-01",
-    "condition": "condition-a",
-    "source": "C:/path/to/rollout.jsonl",
-    "expected_source_sha256": "<64 lowercase hex characters>",
-    "selected_call_ids": ["call-id"],
-    "record_selection": {
-      "scope": {"start_line": 10, "end_line": 40},
-      "session_meta": {"source_line": 1},
-      "turn_context": {"turn_id": "turn-id"},
-      "final_answer": {"stable_id": "answer-id"},
-      "task_completion": {"turn_id": "turn-id"}
-    }
-  }]
-}
-```
-
-Run specifications cannot override worker expectations. Promotion candidates
-also compare the actual model, effort, role, sandbox policy, approval policy,
-and permission profile across every run; missing or different values fail the
-machine gate.
-
-Classification sources are `complete_final_answer`, `complete_task_completion.last_agent_message`, `selected_task_calls.arguments`, and `selected_task_calls.output`. Selected-call sources require `classification.selected_call_id`. Checks support `contains`, `not_contains`, `equals`, `regex`, and `not_regex`; regex flags are `i`, `m`, and `s`.
-
-Worker expectations may name `model`, `effort`, `role`, `sandbox_policy`, `sandbox_type`, `approval_policy`, `permission_profile`, `permission_profile_type`, and `cwd`. Promotion requires every declared expectation to match.
-
-The declared line scope and selected governing-session envelope are closed and validated before projection. They reject duplicate keys, non-finite JSON values, unsupported call-like records, unknown fields on recognized records, malformed nested policies or turn metadata, in-turn session transitions, and incomplete or cross-turn call/output graphs. Every physical turn intersecting the line scope requires one governing session and turn, one complete ordered call/output graph, exactly one logical final, and exactly one bound logical completion. Multiplicity is allowed only for byte-identical complete outer-record replays. Final evidence follows governed call/output records, completion follows and exactly matches the final text, and no governed record follows completion. Unrelated turns wholly outside the declared scope remain pinned by the complete source SHA-256 but are not semantically claimed.
-
-The session selector is evaluated over the full parsed source so it can bind metadata preceding the selected scope. All other selectors are scoped. Session and turn identities are nonempty strings; completion timing fields are exact integers; present worker strings and policy objects follow their declared types. Selected calls, outputs, answer, and completion must belong to one coherent logical turn; exact literal record-content replays deduplicate with provenance.
-
-Run:
-
-```text
-python "<skill-root>/scripts/export_structural_rollout.py" --spec "<spec.json>" --out "<extract.json>"
-python "<skill-root>/scripts/export_structural_rollout.py" --spec "<spec.json>" --verify "<extract.json>"
-```
-
-The output parent must already exist as a real non-reparse directory and the output path must be absent. Export publishes once with no-clobber creation; a second export requires a new filename and never updates the first artifact. Verification is read-only.
-
-The exporter pins and freshly rechecks every source after all runs are assembled and around publication or final verification, emits canonical finite JSON, refuses output aliases to the spec or a source rollout, and retains selected task evidence exactly. On success, the final checked destination bytes match the reported SHA-256.
-
-The output parent and temporary namespace are a trusted, cooperative local filesystem boundary. No same-account process may deliberately replace helper staging entries or the destination during an invocation. Identity checks, no-clobber creation, and cleanup are practical collision and drift controls, not a linearizable multi-path transaction or atomic compare-and-unlink guarantee. Deliberately timed namespace replacement and post-return mutation are outside this evidence workflow's contract.
-
-Keep the spec and extract, not the source rollout, in any review packet.
+Never transmit a source rollout. Include the verified bounded spec and extract in review packets.
 
 ## Report evidence
 

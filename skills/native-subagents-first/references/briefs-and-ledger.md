@@ -2,7 +2,7 @@
 
 ## Child brief
 
-Use a compact, self-contained brief:
+Use a compact, self-contained brief. The fields below are a menu, not a form to fill for every assignment; include what the child needs to act and what the parent needs to verify:
 
 ```text
 Stream: <short label>. <read-only/write-enabled>.
@@ -69,7 +69,7 @@ Keep the ledger small enough to survive compaction:
 | Field | Record |
 | --- | --- |
 | Milestone and terminal synthesis point | Stable ID, name, and stopping condition |
-| Acceptance | 3-6 observable criteria |
+| Acceptance | Observable criteria for the assigned outcome |
 | Child-run budget | Initial cap, used by tool/depth, nested reserved, remaining |
 | Launch batches | Runs and parent delta unlocking each later batch |
 | Capacity | Configured limit, active children, free slots |
@@ -94,8 +94,12 @@ Requested action: <one bounded response>
 
 Require the sender to note the handoff in its final answer. The parent remains responsible for resolving disagreement and verifying the integrated result.
 
+## Progress before another batch
+
+Runs launched from the same parent state form a batch. The first batch needs available budget. Before a later batch, including a follow-up, retry, replacement, or nested run, record a new parent-owned result or decision from the previous batch: an integrated artifact, passed check, closed decision, verified evidence, or advanced goal metric. Reading a child answer counts only after verification or integration.
+
+That result unlocks one declared batch and does not replenish the cumulative cap. Check both progress and unreserved budget. Without them, consolidate or complete authorized work in the parent only when the acceptance criteria permit it. Independent-review, controlled-trial, and delegate-only requirements still apply. Preserve the milestone, cap, used runs, reservations, and last verified result across steering and compaction.
+
 ## Baselines
 
-For every exact read-only scope, compare a bounded recursive manifest regardless of Git tracking or ignore status: lexical relative path, existence, entry type, regular-file SHA-256, and non-dereferenced link/reparse kind plus target identity. Inventory a link-valued scope root itself and never recurse through links. In Git also compare the bounded index identity; use status and diffs as diagnostics only where they cannot cross a link/reparse boundary, and record an explicit skip reason otherwise. Do not hash or enumerate unrelated personal trees.
-
-After a read-only stream, compare the same bounded surface. Treat unexpected files or edits as a failed read-only invariant until explained and recovered safely.
+For writes, record the relevant starting revision and existing changes within the assigned scope. For advisory read-only work, use the bounded manifest and index procedure in [read-only boundaries](read-only-boundaries.md). That reference owns link handling, ignored files, and before/after comparison; a Git status check alone does not prove the read-only invariant.

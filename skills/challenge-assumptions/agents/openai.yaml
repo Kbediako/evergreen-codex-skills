@@ -1,4 +1,4 @@
 interface:
   display_name: "Challenge Assumptions"
-  short_description: "Debug by challenging early assumptions"
+  short_description: "Test root-cause claims and verify repairs"
   default_prompt: "Use $challenge-assumptions to investigate this failure without prematurely blaming upstream or downstream systems."

@@ -1,4 +1,4 @@
 interface:
   display_name: "Native Agent Evals"
-  short_description: "Audit V2 native-agent behavior"
+  short_description: "Audit native-agent behavior and rollouts"
   default_prompt: "Use $native-agent-evals to evaluate this V2 native-agent behavior with auditable evidence."

@@ -1,4 +1,4 @@
 interface:
   display_name: "Wait For Subagents Patiently"
-  short_description: "Handle quiet native children with evidence"
+  short_description: "Wait for native children using evidence"
   default_prompt: "Use $wait-for-subagents-patiently to handle this quiet native child with evidence-based patience."

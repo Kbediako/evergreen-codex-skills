@@ -1,4 +1,4 @@
 interface:
   display_name: "Native Subagents First"
-  short_description: "Use built-in Codex subagents"
+  short_description: "Coordinate bounded native-agent work"
   default_prompt: "Use $native-subagents-first to choose and coordinate bounded native subagents when this work genuinely splits."

@@ -1,67 +1,28 @@
 ---
 name: native-agent-evals
-description: Evaluate or audit Codex native Multi-Agent V2 behavior with small reproducible probes and structural rollout evidence. Use for V2 surface checks, direct-tool lifecycle behavior, bounded fanout, interruption semantics, resume behavior, or skill-invocation evidence.
+description: Test native Codex agent behavior or audit rollout evidence for lifecycle, tool use, and skill invocation. Use for agent-runtime claims, not ordinary task validation.
 ---
 
-# Native Agent Evals
+# Native agent evals
 
-## Define the claim
+Define one observable claim with pass, fail, and inconclusive outcomes. Choose a small probe that can falsify it. Keep production mutations outside the probe unless explicitly requested.
 
-1. State one observable behavior to test.
-2. Define pass, fail, and inconclusive outcomes before running.
-3. Prefer the smallest read-only probe that can falsify the claim.
-4. Exclude production mutations unless the user explicitly requests them.
+## Run a probe
 
-Load [native-subagents-first](../native-subagents-first/SKILL.md) before running native agents. Follow it as the lifecycle, model, budget, resume, and direct-tool contract.
+Before running native agents, load [native-subagents-first](../native-subagents-first/SKILL.md) for the lifecycle and worker contract. Exercise only the behavior under test: tool availability, completion, waiting, fanout, interruption, resume, or skill invocation. For example, fanout needs independent scopes; a lifecycle check may need only one harmless child.
 
-## Hold the worker fixed
+For comparisons, hold model, effort, role, tools, prompt, permissions, and artifact state fixed. Change only the named treatment. Mark mismatched conditions as confounded. Repeat independent behavior comparisons before promoting a claim.
 
-Compare treatment and control under the same Astra worker condition:
+Consume the complete child answer and verify its relevant evidence. Lifecycle status alone does not prove that the requested task succeeded.
 
-- model, effort, role, tool surface, prompt, permissions, and artifact state stay fixed;
-- only the named treatment changes;
-- behavior-level tests repeat before promotion.
+## Audit or export evidence
 
-Mark a comparison confounded when the worker condition differs.
+Read [structural rollout audit](references/rollout-audit.md) before inspecting JSONL, classifying invocation, deduplicating resumed history, or reconstructing existing evidence. For the schema and checks used by `scripts/export_structural_rollout.py`, read [structural evidence export](references/structural-export.md).
 
-## Run a minimal probe
+Parse records structurally; text search locates candidates but cannot prove invocation. Exclude the current audit family from retrospective usage counts. Explicitly selected descendants of a predeclared probe or study may supply experimental evidence; do not count the evaluator's activity as the behavior under test. Keep loaded, read, announced, and applied skill evidence distinct.
 
-Use one or more short V2 scenarios:
-
-- surface: inspect direct collaboration tools visible to a tiny read-only child;
-- lifecycle: spawn, wait for the final answer, and inspect status;
-- wait: distinguish observation mechanism from continuation lifetime;
-- fanout: use two independent read-only scopes only when fanout is under test;
-- interrupt: interrupt a harmless bounded task and inspect returned status;
-- resume: reconcile an existing child after steering or compaction;
-- invocation: distinguish skill loaded, read, announced, and applied.
-
-Consume and verify the child final answer. Status is lifecycle evidence, not task-result evidence.
-
-## Audit rollouts
-
-Read [references/rollout-audit.md](references/rollout-audit.md) before inspecting Windows or WSL JSONL, classifying invocation, or deduplicating resumed history.
-
-Parse JSONL structurally. Treat raw `rg` matches as candidate locations only. Exclude the current audit family. Report exact session IDs, source paths, call IDs, names, namespaces, arguments, outputs, and status transitions.
-
-For outbound evidence, use `scripts/export_structural_rollout.py` with a schema-v3 spec. Keep:
-
-- exact source hash pinning and fresh-byte verification;
-- bounded selectors and session-turn binding;
-- one-turn coherence and final-answer/completion equality;
-- exact selected calls, arguments, outputs, and complete answer;
-- physical and logical replay deduplication;
-- study-wide worker expectations, actual cross-run worker invariance,
-  classification, and fail-closed promotion-candidate gates.
-
-Never attach a source rollout or hand-author evidence presented as independently auditable.
+Never attach a source rollout or hand-author an extract presented as independently auditable. Use the typed exporter with pinned source hashes and bounded selectors, then verify the extract against the current source. Do not relax a failed evidence gate to obtain a passing result.
 
 ## Report
 
-- Claim and fixed worker condition.
-- Treatment, control, and repetition count.
-- Pass, fail, or inconclusive result.
-- Final child evidence and parent verification.
-- Source hashes, paths, session IDs, selectors, and exact direct-tool evidence.
-- Deduplication, classification, worker matching, and promotion status.
-- Confounds, mutations, and remaining uncertainty.
+State the claim, worker condition, probe or comparison, repetitions, result, and parent verification. For rollout claims, include exact source identities, selected calls and outputs, complete answer, deduplication and invocation classifications, and export verification. Disclose confounds, mutations, untested branches, and whether the result supports promotion.

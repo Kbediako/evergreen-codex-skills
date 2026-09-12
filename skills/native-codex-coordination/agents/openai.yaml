@@ -1,4 +1,4 @@
 interface:
   display_name: "Native Codex Coordination"
-  short_description: "Choose the smallest native Codex workflow"
+  short_description: "Choose the right Codex coordination workflow"
   default_prompt: "Use $native-codex-coordination to choose the smallest suitable Codex workflow for this task."
