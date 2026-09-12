@@ -42,7 +42,15 @@ $sourceLine = 0
 Get-Content -LiteralPath $rollout | ForEach-Object {
   $sourceLine += 1
   try {
-    $outer = $_ | ConvertFrom-Json -Depth 100 -ErrorAction Stop
+    $outer = $_ | ConvertFrom-Json -Depth 100 -NoEnumerate -ErrorAction Stop
+    if ($null -eq $outer -or $outer.GetType() -ne [System.Management.Automation.PSCustomObject]) {
+      throw 'Record must be an object'
+    }
+    $item = $outer.payload
+    if ($null -eq $item) { $item = [pscustomobject]@{} }
+    if ($item.GetType() -ne [System.Management.Automation.PSCustomObject]) {
+      throw 'Payload must be an object or null'
+    }
   } catch {
     [pscustomobject]@{
       source_path = $rollout
@@ -51,7 +59,6 @@ Get-Content -LiteralPath $rollout | ForEach-Object {
     }
     return
   }
-  $item = $outer.payload
   [pscustomobject]@{
     source_path = $rollout
     source_line = $sourceLine
@@ -77,12 +84,18 @@ with open(sys.argv[1], encoding="utf-8") as stream:
     for line_no, line in enumerate(stream, 1):
         try:
             row = json.loads(line)
-        except json.JSONDecodeError as error:
+            if not isinstance(row, dict):
+                raise ValueError("Record must be an object")
+            item = row.get("payload")
+            if item is None:
+                item = {}
+            if not isinstance(item, dict):
+                raise ValueError("Payload must be an object or null")
+        except ValueError as error:
             print(json.dumps({"source_path": sys.argv[1],
                               "source_line": line_no,
                               "parse_error": str(error)}))
             continue
-        item = row.get("payload") or {}
         print(json.dumps({"source_path": sys.argv[1], "source_line": line_no,
                           "parse_error": None, "record_type": row.get("type"),
                           "payload_type": item.get("type"), "item_id": item.get("id"),
@@ -91,7 +104,7 @@ with open(sys.argv[1], encoding="utf-8") as stream:
 PY
 ```
 
-These examples inventory source rows, including parse failures. They do not validate malformed evidence or relax the strict export and promotion checks.
+These examples inventory source rows, including syntax and shape failures. A record must be an object; an absent or null payload is inventoried as an empty object. Scalar and array payloads are rejected without coercion. Inventory does not validate evidence for export or relax the strict export and promotion checks.
 
 ## Deduplicate history
 
