@@ -1,0 +1,3 @@
+interface:
+  display_name: "Fast Iteration"
+  short_description: "Shorten feedback loops without compromising quality"

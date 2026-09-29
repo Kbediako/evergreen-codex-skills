@@ -4,6 +4,7 @@
 | --- | --- |
 | [`challenge-assumptions`](challenge-assumptions/) | Falsify premature root-cause claims with proportional, evidence-led investigation. |
 | [`consult-chatgpt-pro`](consult-chatgpt-pro/) | Consult ChatGPT Pro with faithful, verified context, local reconciliation, and evidence-backed closure. |
+| [`fast-iteration`](fast-iteration/) | Shorten engineering feedback loops while preserving required quality, scope, and verification. |
 | [`native-codex-coordination`](native-codex-coordination/) | Route work to the smallest suitable solo, execution, deliberation, evaluation, validation, or waiting workflow. |
 | [`native-subagents-first`](native-subagents-first/) | Coordinate bounded GPT-6 Astra teams with explicit ownership, budgets, evidence, and lifecycle control. |
 | [`native-agent-deliberation`](native-agent-deliberation/) | Decide through evidence-backed viewpoints, tradeoffs, and dissent, then continue authorized work. |
